@@ -1,7 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@fontsource-variable/inter";
+@import "@fontsource-variable/manrope";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -81,7 +81,7 @@
   --sidebar-accent-foreground: oklch(0.224 0.0232 4.9889);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
-  --font-sans: Inter, ui-sans-serif, sans-serif, system-ui;
+  --font-sans: "Manrope Variable", "Avenir Next", "Segoe UI", sans-serif;
   --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
   --font-mono:
     ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
@@ -148,7 +148,19 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    background-image:
+      radial-gradient(
+        circle at 18% 14%,
+        color-mix(in oklab, var(--primary) 10%, white) 0%,
+        transparent 42%
+      ),
+      radial-gradient(
+        circle at 88% 8%,
+        color-mix(in oklab, var(--primary) 6%, white) 0%,
+        transparent 35%
+      );
+    min-height: 100vh;
   }
   html {
     @apply font-sans;

@@ -1,70 +1,129 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { MailIcon, LockIcon, ShieldCheckIcon } from "lucide-react";
+import { Link, createFileRoute } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/")({ component: App });
+import { EsignBrand } from "@/components/layout/esign-brand";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 
-function App() {
+const LoginPage = () => {
   return (
-    <main className="page-wrap px-4 pt-14 pb-8">
-      <section className="island-shell rise-in relative overflow-hidden rounded-[2rem] px-6 py-10 sm:px-10 sm:py-14">
-        <div className="pointer-events-none absolute -top-24 -left-20 h-56 w-56 rounded-full bg-[radial-gradient(circle,rgba(79,184,178,0.32),transparent_66%)]" />
-        <div className="pointer-events-none absolute -right-20 -bottom-20 h-56 w-56 rounded-full bg-[radial-gradient(circle,rgba(47,106,74,0.18),transparent_66%)]" />
-        <p className="island-kicker mb-3">TanStack Start Base Template</p>
-        <h1 className="display-title mb-5 max-w-3xl font-bold text-4xl text-(--sea-ink) leading-[1.02] tracking-tight sm:text-6xl">
-          Start simple, ship quickly.
-        </h1>
-        <p className="mb-8 max-w-2xl text-(--sea-ink-soft) text-base sm:text-lg">
-          This base starter intentionally keeps things light: two routes, clean
-          structure, and the essentials you need to build from scratch.
-        </p>
-        <div className="flex flex-wrap gap-3">
-          <a
-            href="/about"
-            className="rounded-full border border-[rgba(50,143,151,0.3)] bg-[rgba(79,184,178,0.14)] px-5 py-2.5 font-semibold text-[var(--lagoon-deep)] text-sm no-underline transition hover:-translate-y-0.5 hover:bg-[rgba(79,184,178,0.24)]"
-          >
-            About This Starter
-          </a>
-          <a
-            href="https://tanstack.com/router"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-full border border-[rgba(23,58,64,0.2)] bg-white/50 px-5 py-2.5 font-semibold text-[var(--sea-ink)] text-sm no-underline transition hover:-translate-y-0.5 hover:border-[rgba(23,58,64,0.35)]"
-          >
-            Router Guide
-          </a>
-        </div>
-      </section>
+    <div className="flex min-h-screen flex-col bg-background text-[#2d1b25]">
+      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 lg:px-8 lg:py-10">
+        <header>
+          <EsignBrand className="[&_p]:text-[1.35rem]" />
+        </header>
 
-      <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {[
-          [
-            "Type-Safe Routing",
-            "Routes and links stay in sync across every page.",
-          ],
-          [
-            "Server Functions",
-            "Call server code from your UI without creating API boilerplate.",
-          ],
-          [
-            "Streaming by Default",
-            "Ship progressively rendered responses for faster experiences.",
-          ],
-          [
-            "Tailwind Native",
-            "Design quickly with utility-first styling and reusable tokens.",
-          ],
-        ].map(([title, desc], index) => (
-          <article
-            key={title}
-            className="island-shell feature-card rise-in rounded-2xl p-5"
-            style={{ animationDelay: `${index * 90 + 80}ms` }}
-          >
-            <h2 className="mb-2 font-semibold text-[var(--sea-ink)] text-base">
-              {title}
-            </h2>
-            <p className="m-0 text-[var(--sea-ink-soft)] text-sm">{desc}</p>
-          </article>
-        ))}
-      </section>
-    </main>
+        <section className="mt-8 grid gap-8 xl:grid-cols-[1.55fr_1fr]">
+          <div>
+            <h1 className="max-w-xl font-black text-[4.4rem] leading-[0.95] tracking-[-0.05em] text-[#2b1823] sm:text-[5.4rem]">
+              Precision <span className="font-serif text-primary italic">Curator</span> of Trust.
+            </h1>
+            <p className="mt-6 max-w-xl text-[1.25rem] leading-relaxed text-[#67535d]">
+              The ultimate space for secure digital transactions. Manage, sign,
+              and store your most vital documents with unparalleled authority.
+            </p>
+
+            <Card className="mt-9 rounded-2xl border border-[#ecdbe1] bg-[#f8edf1] py-0 ring-0">
+              <CardContent className="relative px-3 py-3 sm:px-4 sm:py-4">
+                <div className="h-82.5 overflow-hidden rounded-xl bg-[linear-gradient(135deg,#bfbec2_0%,#d7d5d7_40%,#aaaaaf_100%)]">
+                  <div className="h-full w-full bg-[radial-gradient(circle_at_22%_30%,rgba(255,255,255,0.75),transparent_40%),linear-gradient(140deg,rgba(255,255,255,0.6)_0%,transparent_48%),linear-gradient(0deg,rgba(255,255,255,0.4)_0%,transparent_38%)]" />
+                </div>
+
+                <div className="absolute bottom-8 left-8 rounded-xl border border-[#ebdce1] bg-white px-4 py-3 shadow-sm">
+                  <p className="font-black text-[0.68rem] uppercase tracking-[0.2em] text-primary">
+                    Encrypted Security
+                  </p>
+                  <p className="mt-1 text-[0.84rem] text-[#5f4f57]">
+                    AES-256 Bit Encryption Protocol
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="xl:pt-10">
+            <Card className="rounded-2xl border border-[#ebdce2] bg-[#faf4f7] py-0 ring-0">
+              <CardHeader className="space-y-2 px-5 pt-6 pb-3 sm:px-8">
+                <CardTitle className="font-black text-[3rem] tracking-[-0.05em] text-[#2b1823]">
+                  Sign In
+                </CardTitle>
+                <p className="text-[#73606a]">Access your signature vault</p>
+              </CardHeader>
+
+              <CardContent className="space-y-4 px-5 pb-6 sm:px-8">
+                <div>
+                  <p className="mb-1.5 text-[0.68rem] font-black uppercase tracking-[0.2em] text-[#8f7a83]">
+                    Email Address
+                  </p>
+                  <div className="relative">
+                    <Input
+                      placeholder="curator@esign.com"
+                      className="h-11 rounded-lg border-[#ebd5dd] bg-white pr-10"
+                    />
+                    <MailIcon className="pointer-events-none absolute top-1/2 right-3.5 size-4 -translate-y-1/2 text-[#bea4ad]" />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="mb-1.5 flex items-center justify-between gap-2">
+                    <p className="text-[0.68rem] font-black uppercase tracking-[0.2em] text-[#8f7a83]">
+                      Password
+                    </p>
+                    <button type="button" className="font-bold text-[0.68rem] uppercase tracking-[0.14em] text-primary">
+                      Forgot Password?
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <Input
+                      type="password"
+                      value="password"
+                      readOnly
+                      className="h-11 rounded-lg border-[#ebd5dd] bg-white pr-10"
+                    />
+                    <LockIcon className="pointer-events-none absolute top-1/2 right-3.5 size-4 -translate-y-1/2 text-[#bea4ad]" />
+                  </div>
+                </div>
+
+                <Link to="/dashboard" className="block pt-2">
+                  <Button className="h-11 w-full rounded-lg text-[0.95rem]">Sign In →</Button>
+                </Link>
+
+                <p className="pt-2 text-center text-[0.86rem] text-[#77636d]">
+                  New to the platform?{" "}
+                  <button type="button" className="font-semibold text-primary">
+                    Create Account
+                  </button>
+                </p>
+
+                <div className="pt-5 text-center text-[0.64rem] font-semibold uppercase tracking-[0.18em] text-[#a8949d]">
+                  <p className="inline-flex items-center gap-2">
+                    <ShieldCheckIcon className="size-3.5" />
+                    Secure Cloud
+                    <span>•</span>
+                    Legally Binding
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </section>
+      </main>
+
+      <footer className="border-t border-[#eadbe0] px-4 py-6 text-[0.68rem] uppercase tracking-[0.2em] text-[#8e7b84] lg:px-8">
+        <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-4">
+          <span>© 2024 ESign Precision Curator</span>
+          <div className="flex items-center gap-7">
+            <span>Privacy Policy</span>
+            <span>Terms of Service</span>
+            <span>Contact</span>
+          </div>
+        </div>
+      </footer>
+    </div>
   );
-}
+};
+
+export const Route = createFileRoute("/")({
+  component: LoginPage,
+});
