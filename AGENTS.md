@@ -130,3 +130,5 @@ When instructed to perform a task, leverage the specific skills in `.agents/skil
 - **`context7`**: Use when needing to look up documentation or code examples for external libraries.
 - **`tanstack-router-best-practices`**: Use when working with React and TanStack Router for file-based routing, creating hooks, or updating component architecture.
 - **`shadcn`**: Use to manage or add shadcn/ui components, work with `components.json`, or debug component styling.
+- **tanstack-query-best-practices**: Use when working with TanStack Query for server-side data management.
+- **tanstack-form**: Use when working with TanStack Form for form handling.
