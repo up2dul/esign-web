@@ -17,7 +17,7 @@ export const useSignSpecimenList = () => {
 
 export const useSignUpload = () => {
   const signUpload = useMutation<Sign, Error, FormData>({
-    mutationFn: async (formData: FormData) => {
+    mutationFn: async (formData) => {
       const res = await api
         .post(API_ROUTES.SIGN.UPLOAD, { body: formData })
         .json();

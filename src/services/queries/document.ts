@@ -53,7 +53,7 @@ export const useDocumentValidity = (id: string) => {
 
 export const useDocumentUpload = () => {
   const documentUpload = useMutation<Document, Error, FormData>({
-    mutationFn: async (formData: FormData) => {
+    mutationFn: async (formData) => {
       const res = await api
         .post(API_ROUTES.DOCUMENT.UPLOAD, { body: formData })
         .json();
@@ -65,7 +65,7 @@ export const useDocumentUpload = () => {
 
 export const useDocumentSign = () => {
   const documentSign = useMutation<Document, Error, SignDocsRequest>({
-    mutationFn: async (data: SignDocsRequest) => {
+    mutationFn: async (data) => {
       const validated = SignDocsRequestSchema.parse(data);
       const res = await api
         .post(API_ROUTES.DOCUMENT.SIGN, { json: validated })

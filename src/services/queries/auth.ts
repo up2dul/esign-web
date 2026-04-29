@@ -30,7 +30,7 @@ import { API_ROUTES, QUERY_KEYS } from "@/services/api-config";
 
 export const useRegister = () => {
   const register = useMutation<SuccessResponse, Error, RegisterRequest>({
-    mutationFn: async (data: RegisterRequest) => {
+    mutationFn: async (data) => {
       const validated = RegisterRequestSchema.parse(data);
       const res = await api
         .post(API_ROUTES.AUTH.REGISTER, { json: validated })
@@ -43,7 +43,7 @@ export const useRegister = () => {
 
 export const useLogin = () => {
   const login = useMutation<SuccessResponse, Error, LoginRequest>({
-    mutationFn: async (data: LoginRequest) => {
+    mutationFn: async (data) => {
       const validated = LoginRequestSchema.parse(data);
       const res = await api
         .post(API_ROUTES.AUTH.LOGIN, { json: validated })

@@ -10,7 +10,7 @@ export const useVerificationOcr = () => {
     Error,
     FormData
   >({
-    mutationFn: async (formData: FormData) => {
+    mutationFn: async (formData) => {
       const res = await api
         .post(API_ROUTES.VERIFICATION.OCR, { body: formData })
         .json();
@@ -26,7 +26,7 @@ export const useVerificationFaceRecognition = () => {
     Error,
     FormData
   >({
-    mutationFn: async (formData: FormData) => {
+    mutationFn: async (formData) => {
       const res = await api
         .post(API_ROUTES.VERIFICATION.FACE_RECOGNITION, { body: formData })
         .json();
