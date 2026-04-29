@@ -9,6 +9,8 @@
   "files": {
     "ignoreUnknown": false,
     "includes": [
+      "vite.config.ts",
+      "src/**/*",
       "**/.vscode/**/*",
       "!**/src/routeTree.gen.ts",
       "!**/src/index.css"
@@ -54,7 +56,7 @@
       "nursery": {
         "useSortedClasses": {
           "level": "warn",
-          "fix": "none",
+          "fix": "unsafe",
           "options": {
             "attributes": ["classList"],
             "functions": ["clsx", "cn", "cx", "cva", "tv", "tw"]
