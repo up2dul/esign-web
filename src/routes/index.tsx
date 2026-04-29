@@ -1,5 +1,5 @@
-import { MailIcon, LockIcon, ShieldCheckIcon } from "lucide-react";
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { LockIcon, MailIcon, ShieldCheckIcon } from "lucide-react";
 
 import { EsignBrand } from "@/components/layout/esign-brand";
 import { Button } from "@/components/ui/button";
@@ -16,10 +16,12 @@ const LoginPage = () => {
 
         <section className="mt-8 grid gap-8 xl:grid-cols-[1.55fr_1fr]">
           <div>
-            <h1 className="max-w-xl font-black text-[4.4rem] leading-[0.95] tracking-[-0.05em] text-[#2b1823] sm:text-[5.4rem]">
-              Precision <span className="font-serif text-primary italic">Curator</span> of Trust.
+            <h1 className="max-w-xl font-black text-[#2b1823] text-[4.4rem] leading-[0.95] tracking-[-0.05em] sm:text-[5.4rem]">
+              Precision{" "}
+              <span className="font-serif text-primary italic">Curator</span> of
+              Trust.
             </h1>
-            <p className="mt-6 max-w-xl text-[1.25rem] leading-relaxed text-[#67535d]">
+            <p className="mt-6 max-w-xl text-[#67535d] text-[1.25rem] leading-relaxed">
               The ultimate space for secure digital transactions. Manage, sign,
               and store your most vital documents with unparalleled authority.
             </p>
@@ -31,10 +33,10 @@ const LoginPage = () => {
                 </div>
 
                 <div className="absolute bottom-8 left-8 rounded-xl border border-[#ebdce1] bg-white px-4 py-3 shadow-sm">
-                  <p className="font-black text-[0.68rem] uppercase tracking-[0.2em] text-primary">
+                  <p className="font-black text-[0.68rem] text-primary uppercase tracking-[0.2em]">
                     Encrypted Security
                   </p>
-                  <p className="mt-1 text-[0.84rem] text-[#5f4f57]">
+                  <p className="mt-1 text-[#5f4f57] text-[0.84rem]">
                     AES-256 Bit Encryption Protocol
                   </p>
                 </div>
@@ -45,7 +47,7 @@ const LoginPage = () => {
           <div className="xl:pt-10">
             <Card className="rounded-2xl border border-[#ebdce2] bg-[#faf4f7] py-0 ring-0">
               <CardHeader className="space-y-2 px-5 pt-6 pb-3 sm:px-8">
-                <CardTitle className="font-black text-[3rem] tracking-[-0.05em] text-[#2b1823]">
+                <CardTitle className="font-black text-[#2b1823] text-[3rem] tracking-[-0.05em]">
                   Sign In
                 </CardTitle>
                 <p className="text-[#73606a]">Access your signature vault</p>
@@ -53,7 +55,7 @@ const LoginPage = () => {
 
               <CardContent className="space-y-4 px-5 pb-6 sm:px-8">
                 <div>
-                  <p className="mb-1.5 text-[0.68rem] font-black uppercase tracking-[0.2em] text-[#8f7a83]">
+                  <p className="mb-1.5 font-black text-[#8f7a83] text-[0.68rem] uppercase tracking-[0.2em]">
                     Email Address
                   </p>
                   <div className="relative">
@@ -67,10 +69,13 @@ const LoginPage = () => {
 
                 <div>
                   <div className="mb-1.5 flex items-center justify-between gap-2">
-                    <p className="text-[0.68rem] font-black uppercase tracking-[0.2em] text-[#8f7a83]">
+                    <p className="font-black text-[#8f7a83] text-[0.68rem] uppercase tracking-[0.2em]">
                       Password
                     </p>
-                    <button type="button" className="font-bold text-[0.68rem] uppercase tracking-[0.14em] text-primary">
+                    <button
+                      type="button"
+                      className="font-bold text-[0.68rem] text-primary uppercase tracking-[0.14em]"
+                    >
                       Forgot Password?
                     </button>
                   </div>
@@ -86,17 +91,19 @@ const LoginPage = () => {
                 </div>
 
                 <Link to="/dashboard" className="block pt-2">
-                  <Button className="h-11 w-full rounded-lg text-[0.95rem]">Sign In →</Button>
+                  <Button className="h-11 w-full rounded-lg text-[0.95rem]">
+                    Sign In →
+                  </Button>
                 </Link>
 
-                <p className="pt-2 text-center text-[0.86rem] text-[#77636d]">
+                <p className="pt-2 text-center text-[#77636d] text-[0.86rem]">
                   New to the platform?{" "}
                   <button type="button" className="font-semibold text-primary">
                     Create Account
                   </button>
                 </p>
 
-                <div className="pt-5 text-center text-[0.64rem] font-semibold uppercase tracking-[0.18em] text-[#a8949d]">
+                <div className="pt-5 text-center font-semibold text-[#a8949d] text-[0.64rem] uppercase tracking-[0.18em]">
                   <p className="inline-flex items-center gap-2">
                     <ShieldCheckIcon className="size-3.5" />
                     Secure Cloud
@@ -110,7 +117,7 @@ const LoginPage = () => {
         </section>
       </main>
 
-      <footer className="border-t border-[#eadbe0] px-4 py-6 text-[0.68rem] uppercase tracking-[0.2em] text-[#8e7b84] lg:px-8">
+      <footer className="border-[#eadbe0] border-t px-4 py-6 text-[#8e7b84] text-[0.68rem] uppercase tracking-[0.2em] lg:px-8">
         <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-4">
           <span>© 2024 ESign Precision Curator</span>
           <div className="flex items-center gap-7">

@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { Link, useRouterState } from "@tanstack/react-router";
 import {
   ArchiveIcon,
   CircleHelpIcon,
@@ -7,7 +7,7 @@ import {
   LayoutGridIcon,
   SettingsIcon,
 } from "lucide-react";
-import { Link, useRouterState } from "@tanstack/react-router";
+import type { ReactNode } from "react";
 
 import { EsignBrand } from "@/components/layout/esign-brand";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -31,8 +31,18 @@ const topNavItems: NavItem[] = [
 ];
 
 const sidebarItems = [
-  { key: "overview", label: "Overview", to: "/dashboard", icon: LayoutGridIcon },
-  { key: "documents", label: "All Documents", to: "/documents", icon: FileTextIcon },
+  {
+    key: "overview",
+    label: "Overview",
+    to: "/dashboard",
+    icon: LayoutGridIcon,
+  },
+  {
+    key: "documents",
+    label: "All Documents",
+    to: "/documents",
+    icon: FileTextIcon,
+  },
   { key: "pending", label: "Pending", to: "/pending", icon: FileClockIcon },
   { key: "archived", label: "Archived", to: "/archived", icon: ArchiveIcon },
 ] as const;
@@ -72,16 +82,22 @@ function getSidebarSection(pathname: string) {
 }
 
 export const VaultShell = ({ children }: VaultShellProps) => {
-  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const pathname = useRouterState({
+    select: (state) => state.location.pathname,
+  });
   const topSection = getTopSection(pathname);
   const sidebarSection = getSidebarSection(pathname);
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-[#2d1b25]">
-      <header className="border-b border-[#e9d7dd]/80 bg-[#f9f4f6]/95 backdrop-blur">
+      <header className="border-[#e9d7dd]/80 border-b bg-[#f9f4f6]/95 backdrop-blur">
         <div className="mx-auto flex h-20 w-full max-w-7xl items-center justify-between gap-4 px-4 lg:px-8">
           <div className="flex items-center gap-6">
-            <Link to="/dashboard" className="shrink-0" aria-label="Go to dashboard">
+            <Link
+              to="/dashboard"
+              className="shrink-0"
+              aria-label="Go to dashboard"
+            >
               <EsignBrand className="[&_p]:text-[1.2rem]" />
             </Link>
             <nav className="hidden items-center gap-5 md:flex">
@@ -90,7 +106,7 @@ export const VaultShell = ({ children }: VaultShellProps) => {
                   key={item.key}
                   to={item.to}
                   className={cn(
-                    "border-b-2 border-transparent px-0.5 pb-1 font-semibold text-[0.92rem] text-[#68545f] transition-colors",
+                    "border-transparent border-b-2 px-0.5 pb-1 font-semibold text-[#68545f] text-[0.92rem] transition-colors",
                     topSection === item.key && "border-primary text-primary"
                   )}
                 >
@@ -103,7 +119,7 @@ export const VaultShell = ({ children }: VaultShellProps) => {
           <div className="flex items-center gap-3">
             <Link
               to="/"
-              className="hidden font-semibold text-[0.84rem] text-[#7f6a73] transition-colors hover:text-primary sm:inline-flex"
+              className="hidden font-semibold text-[#7f6a73] text-[0.84rem] transition-colors hover:text-primary sm:inline-flex"
             >
               Sign Out
             </Link>
@@ -119,17 +135,25 @@ export const VaultShell = ({ children }: VaultShellProps) => {
           <div className="rounded-2xl border border-[#ead5dc] bg-[#f4e8ec] p-3">
             <div className="flex items-center gap-2">
               <Avatar size="lg" className="ring-2 ring-white/80">
-                <AvatarImage src="https://i.pravatar.cc/100?img=13" alt="Signature Vault user" />
+                <AvatarImage
+                  src="https://i.pravatar.cc/100?img=13"
+                  alt="Signature Vault user"
+                />
                 <AvatarFallback>SV</AvatarFallback>
               </Avatar>
               <div>
-                <p className="font-bold text-[0.95rem] text-[#2f1c24]">Signature Vault</p>
-                <p className="font-semibold text-[0.66rem] uppercase tracking-[0.16em] text-primary/80">
+                <p className="font-bold text-[#2f1c24] text-[0.95rem]">
+                  Signature Vault
+                </p>
+                <p className="font-semibold text-[0.66rem] text-primary/80 uppercase tracking-[0.16em]">
                   Premium Plan
                 </p>
               </div>
             </div>
-            <Button variant="outline" className="mt-4 h-9 w-full rounded-lg border-[#edcfd9] bg-white text-[0.84rem] font-semibold text-primary hover:bg-[#fff4f8]">
+            <Button
+              variant="outline"
+              className="mt-4 h-9 w-full rounded-lg border-[#edcfd9] bg-white font-semibold text-[0.84rem] text-primary hover:bg-[#fff4f8]"
+            >
               + New Document
             </Button>
           </div>
@@ -144,8 +168,10 @@ export const VaultShell = ({ children }: VaultShellProps) => {
                   key={item.key}
                   to={item.to}
                   className={cn(
-                    "flex items-center gap-2 rounded-lg px-3 py-2 text-[0.86rem] font-semibold text-[#4f3f47] transition-colors",
-                    isActive ? "bg-white text-primary shadow-[inset_0_0_0_1px_rgba(188,18,101,0.12)]" : "hover:bg-white/70"
+                    "flex items-center gap-2 rounded-lg px-3 py-2 font-semibold text-[#4f3f47] text-[0.86rem] transition-colors",
+                    isActive
+                      ? "bg-white text-primary shadow-[inset_0_0_0_1px_rgba(188,18,101,0.12)]"
+                      : "hover:bg-white/70"
                   )}
                 >
                   <Icon className="size-4" />
@@ -159,7 +185,7 @@ export const VaultShell = ({ children }: VaultShellProps) => {
             <Link
               to="/profile"
               className={cn(
-                "flex items-center gap-2 rounded-lg px-3 py-2 text-[0.86rem] font-semibold text-[#4f3f47] transition-colors",
+                "flex items-center gap-2 rounded-lg px-3 py-2 font-semibold text-[#4f3f47] text-[0.86rem] transition-colors",
                 sidebarSection === "settings"
                   ? "bg-white text-primary shadow-[inset_0_0_0_1px_rgba(188,18,101,0.12)]"
                   : "hover:bg-white/70"
@@ -170,7 +196,7 @@ export const VaultShell = ({ children }: VaultShellProps) => {
             </Link>
             <button
               type="button"
-              className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-[0.86rem] font-semibold text-[#4f3f47] transition-colors hover:bg-white/70"
+              className="flex items-center gap-2 rounded-lg px-3 py-2 text-left font-semibold text-[#4f3f47] text-[0.86rem] transition-colors hover:bg-white/70"
             >
               <CircleHelpIcon className="size-4" />
               Support
@@ -181,7 +207,7 @@ export const VaultShell = ({ children }: VaultShellProps) => {
         <main className="px-4 py-8 lg:px-10 lg:py-10">{children}</main>
       </div>
 
-      <footer className="border-t border-[#eadbe0] px-4 py-6 text-[0.68rem] uppercase tracking-[0.2em] text-[#8e7b84] lg:px-8">
+      <footer className="border-[#eadbe0] border-t px-4 py-6 text-[#8e7b84] text-[0.68rem] uppercase tracking-[0.2em] lg:px-8">
         <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-4">
           <span>© 2024 ESign Precision Curator</span>
           <div className="flex items-center gap-7">

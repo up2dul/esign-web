@@ -1,5 +1,5 @@
-import { Grid2X2Icon, SearchIcon, SlidersHorizontalIcon } from "lucide-react";
 import { createFileRoute } from "@tanstack/react-router";
+import { Grid2X2Icon, SearchIcon, SlidersHorizontalIcon } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -37,8 +37,12 @@ const DashboardPage = () => {
   return (
     <div className="space-y-8">
       <section>
-        <h1 className="font-black text-5xl tracking-[-0.03em] text-[#2b1823]">Documents</h1>
-        <p className="mt-2 text-[#705c67]">Manage your curated signature collection.</p>
+        <h1 className="font-black text-5xl text-[#2b1823] tracking-[-0.03em]">
+          Documents
+        </h1>
+        <p className="mt-2 text-[#705c67]">
+          Manage your curated signature collection.
+        </p>
       </section>
 
       <section className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -51,10 +55,18 @@ const DashboardPage = () => {
         </div>
 
         <div className="flex items-center gap-2 self-end md:self-auto">
-          <Button variant="outline" size="icon" className="size-9 rounded-lg border-[#ecd6dd] bg-[#f8eef2] text-[#6c5a63]">
+          <Button
+            variant="outline"
+            size="icon"
+            className="size-9 rounded-lg border-[#ecd6dd] bg-[#f8eef2] text-[#6c5a63]"
+          >
             <SlidersHorizontalIcon />
           </Button>
-          <Button variant="outline" size="icon" className="size-9 rounded-lg border-[#ecd6dd] bg-[#f8eef2] text-[#6c5a63]">
+          <Button
+            variant="outline"
+            size="icon"
+            className="size-9 rounded-lg border-[#ecd6dd] bg-[#f8eef2] text-[#6c5a63]"
+          >
             <Grid2X2Icon />
           </Button>
         </div>
@@ -77,28 +89,34 @@ const DashboardPage = () => {
             </div>
             <CardHeader className="space-y-3 px-4 pt-5 pb-2">
               <div className="flex items-center justify-between gap-2">
-                <CardTitle className="font-black text-[1.85rem] leading-[1.05] tracking-[-0.02em] text-[#2e1d27]">
+                <CardTitle className="font-black text-[#2e1d27] text-[1.85rem] leading-[1.05] tracking-[-0.02em]">
                   {document.title}
                 </CardTitle>
-                <Badge className={`rounded-full px-2.5 py-0.5 text-[0.58rem] font-bold uppercase tracking-[0.12em] ${document.statusClass}`}>
+                <Badge
+                  className={`rounded-full px-2.5 py-0.5 font-bold text-[0.58rem] uppercase tracking-[0.12em] ${document.statusClass}`}
+                >
                   {document.status}
                 </Badge>
               </div>
             </CardHeader>
-            <CardContent className="px-4 pb-5 text-[0.78rem] font-semibold text-[#8a7580]">
+            <CardContent className="px-4 pb-5 font-semibold text-[#8a7580] text-[0.78rem]">
               {document.modified}
             </CardContent>
           </Card>
         ))}
 
-        <Card className="grid min-h-88.75 place-content-center rounded-2xl border border-dashed border-[#efc6d3] bg-[#f9eff2] py-0 text-center ring-0">
+        <Card className="grid min-h-88.75 place-content-center rounded-2xl border border-[#efc6d3] border-dashed bg-[#f9eff2] py-0 text-center ring-0">
           <CardContent className="space-y-3 px-6 py-8">
             <span className="mx-auto grid size-12 place-content-center rounded-full bg-[#f6dbe5] text-primary">
               <span className="text-3xl leading-none">+</span>
             </span>
             <div>
-              <p className="font-black text-[1.35rem] text-[#2b1823]">New Document</p>
-              <p className="mt-1 text-[0.84rem] text-[#7b6771]">Upload PDF or Docx</p>
+              <p className="font-black text-[#2b1823] text-[1.35rem]">
+                New Document
+              </p>
+              <p className="mt-1 text-[#7b6771] text-[0.84rem]">
+                Upload PDF or Docx
+              </p>
             </div>
           </CardContent>
         </Card>
