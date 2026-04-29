@@ -1,0 +1,713 @@
+openapi: 3.0.3
+info:
+  title: E-Sign API
+  description: API for electronic signature service
+  version: 1.0.0
+paths:
+  /healthcheck:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Hello World!
+
+  /v1/auth/register:
+    post:
+      tags:
+        - Auth
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '200':
+          description: OTP Sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /v1/auth/resend-otp:
+    post:
+      tags:
+        - Auth
+      summary: Resend OTP to email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: OTP Sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /v1/auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Login user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: OTP Sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /v1/auth/verify-otp:
+    post:
+      tags:
+        - Auth
+      summary: Verify OTP and login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyOtpRequest'
+      responses:
+        '200':
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/UserTokenResponse'
+
+  /v1/auth/forgot-password:
+    post:
+      tags:
+        - Auth
+      summary: Forgot password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: Reset token sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      token:
+                        type: string
+
+  /v1/auth/reset-password:
+    post:
+      tags:
+        - Auth
+      summary: Reset password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordRequest'
+      responses:
+        '200':
+          description: Password reset successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  message:
+                    type: string
+
+  /v1/user/profile:
+    get:
+      tags:
+        - User
+      summary: Get user profile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  is_success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/User'
+
+  /v1/verification/ocr:
+    post:
+      tags:
+        - Verification
+      summary: KTP OCR verification
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+      responses:
+        '200':
+          description: Success verify ktp
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /v1/verification/face-recognition:
+    post:
+      tags:
+        - Verification
+      summary: Face recognition verification
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                longitude:
+                  type: string
+                latitude:
+                  type: string
+      responses:
+        '200':
+          description: Success verify face
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+
+  /v1/document/upload:
+    post:
+      tags:
+        - Document
+      summary: Upload document
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+      responses:
+        '200':
+          description: Success upload document
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Document'
+
+  /v1/document/sign:
+    post:
+      tags:
+        - Document
+      summary: Sign document
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignDocsRequest'
+      responses:
+        '200':
+          description: Success sign document
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Document'
+
+  /v1/document/preview/{id}:
+    get:
+      tags:
+        - Document
+      summary: Preview document
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: type
+          in: query
+          schema:
+            type: string
+            default: original
+      responses:
+        '200':
+          description: Document buffer
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  buffer:
+                    type: object
+                  parameters:
+                    type: object
+                    properties:
+                      mimeType:
+                        type: string
+                      fileName:
+                        type: string
+                      size:
+                        type: integer
+
+  /v1/document/download/{id}:
+    get:
+      tags:
+        - Document
+      summary: Download document
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: type
+          in: query
+          schema:
+            type: string
+            default: original
+      responses:
+        '200':
+          description: Document file
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+
+  /v1/document/list:
+    get:
+      tags:
+        - Document
+      summary: List documents
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Success get document list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Document'
+
+  /v1/document/validity/{id}:
+    get:
+      tags:
+        - Document
+      summary: Validity check document
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Validity check document
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+
+  /v1/sign/upload:
+    post:
+      tags:
+        - Sign
+      summary: Upload sign specimen
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+      responses:
+        '200':
+          description: Success upload specimen
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Sign'
+
+  /v1/sign/specimen:
+    get:
+      tags:
+        - Sign
+      summary: List sign specimens
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Success get sign specimen
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Sign'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+        - confirm_password
+        - name
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        confirm_password:
+          type: string
+          minLength: 8
+        name:
+          type: string
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+
+    VerifyOtpRequest:
+      type: object
+      required:
+        - otp
+        - email
+      properties:
+        otp:
+          type: string
+        email:
+          type: string
+          format: email
+
+    ResetPasswordRequest:
+      type: object
+      required:
+        - password
+        - confirm_password
+        - token
+        - otp_code
+      properties:
+        password:
+          type: string
+          minLength: 8
+        confirm_password:
+          type: string
+          minLength: 8
+        token:
+          type: string
+        otp_code:
+          type: string
+
+    UserTokenResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        expires_in:
+          type: number
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        card_no:
+          type: string
+        is_email_verified:
+          type: boolean
+        is_verified:
+          type: boolean
+        is_face_recognized:
+          type: boolean
+        profile_picture:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Document:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        signed_file_id:
+          type: string
+          format: uuid
+          nullable: true
+        original_file_id:
+          type: string
+          format: uuid
+        sign_id:
+          type: string
+          format: uuid
+          nullable: true
+        status:
+          type: string
+          enum: [DRAFT, SIGNED]
+        metadata:
+          type: object
+          nullable: true
+        cover_url:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Sign:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        file_id:
+          type: string
+          format: uuid
+        metadata:
+          type: object
+        preview_url:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    SignDocsRequest:
+      type: object
+      required:
+        - document_id
+        - sign_id
+        - metadata
+      properties:
+        document_id:
+          type: string
+          format: uuid
+        sign_id:
+          type: string
+          format: uuid
+        metadata:
+          type: object
+          required:
+            - koor_x
+            - koor_y
+            - height
+            - width
+            - page
+          properties:
+            koor_x:
+              type: number
+            koor_y:
+              type: number
+            height:
+              type: number
+            width:
+              type: number
+            page:
+              type: integer
