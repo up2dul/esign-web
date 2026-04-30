@@ -6,7 +6,7 @@ elif [ -f "bun.lock" ]; then
 elif [ -f "yarn.lock" ]; then
   LS_CMD="yarn lint-staged"
 else
-  LS_CMD="npm lint-staged"
+  LS_CMD="npx lint-staged"
 fi
 
 echo "📝 Checking types, linting, and formatting before committing..."
