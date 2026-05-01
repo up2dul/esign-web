@@ -57,7 +57,7 @@ export const useLogin = () => {
 export const useVerifyOtp = () => {
   const verifyOtp = useMutation<VerifyOtpResponse, Error, VerifyOtpRequest>({
     mutationKey: QUERY_KEYS.AUTH.VERIFY_OTP,
-    mutationFn: async (data: VerifyOtpRequest) => {
+    mutationFn: async (data) => {
       const validated = VerifyOtpRequestSchema.parse(data);
       const res = await api
         .post(API_ROUTES.AUTH.VERIFY_OTP, { json: validated })
@@ -71,7 +71,7 @@ export const useVerifyOtp = () => {
 export const useResendOtp = () => {
   const resendOtp = useMutation<SuccessResponse, Error, ResendOtpRequest>({
     mutationKey: QUERY_KEYS.AUTH.RESEND_OTP,
-    mutationFn: async (data: ResendOtpRequest) => {
+    mutationFn: async (data) => {
       const validated = ResendOtpRequestSchema.parse(data);
       const res = await api
         .post(API_ROUTES.AUTH.RESEND_OTP, { json: validated })
@@ -88,7 +88,7 @@ export const useForgotPassword = () => {
     Error,
     ForgotPasswordRequest
   >({
-    mutationFn: async (data: ForgotPasswordRequest) => {
+    mutationFn: async (data) => {
       const validated = ForgotPasswordRequestSchema.parse(data);
       const res = await api
         .post(API_ROUTES.AUTH.FORGOT_PASSWORD, { json: validated })
@@ -105,7 +105,7 @@ export const useResetPassword = () => {
     Error,
     ResetPasswordRequest
   >({
-    mutationFn: async (data: ResetPasswordRequest) => {
+    mutationFn: async (data) => {
       const validated = ResetPasswordRequestSchema.parse(data);
       const res = await api
         .post(API_ROUTES.AUTH.RESET_PASSWORD, { json: validated })
