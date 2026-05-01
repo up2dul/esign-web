@@ -1,36 +1,68 @@
 import { z } from "zod";
 
-export const RegisterRequestSchema = z.object({
-  email: z.email(),
-  password: z.string().min(8),
-  confirm_password: z.string().min(8),
-  name: z.string(),
+export const ApiErrorSchema = z.object({
+  code: z.string(),
 });
 
+export const ApiErrorResponseSchema = z.object({
+  success: z.boolean(),
+  message: z.string(),
+  data: z.record(z.string(), z.string()).optional(),
+  error: ApiErrorSchema.optional(),
+});
+
+export type ApiErrorResponse = z.infer<typeof ApiErrorResponseSchema>;
+
+export const RegisterRequestSchema = z
+  .object({
+    email: z.email().min(1, "Email is required"),
+    password: z
+      .string()
+      .min(8, "Password must be at least 8 characters long")
+      .regex(/[!@#$%^&*(),.?":{}|<>]/, {
+        message: "Password must contain at least one special character",
+      }),
+    confirm_password: z
+      .string()
+      .min(8, "Password must be at least 8 characters long"),
+    name: z.string().min(1, "Name is required"),
+  })
+  .refine((data) => data.password === data.confirm_password, {
+    message: "Passwords must match",
+    path: ["confirm_password"],
+  });
+
 export const LoginRequestSchema = z.object({
-  email: z.email(),
-  password: z.string().min(8),
+  email: z.email().min(1, "Email is required"),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters long")
+    .regex(/[!@#$%^&*(),.?":{}|<>]/, {
+      message: "Password must contain at least one special character",
+    }),
 });
 
 export const VerifyOtpRequestSchema = z.object({
-  email: z.email(),
-  otp: z.string(),
+  email: z.email().min(1, "Email is required"),
+  otp: z.string().min(1, "OTP is required"),
 });
 
 export const ResetPasswordRequestSchema = z.object({
-  email: z.email(),
-  password: z.string().min(8),
-  confirm_password: z.string().min(8),
-  token: z.string(),
-  otp_code: z.string(),
+  email: z.email().min(1, "Email is required"),
+  password: z.string().min(8, "Password must be at least 8 characters long"),
+  confirm_password: z
+    .string()
+    .min(8, "Password must be at least 8 characters long"),
+  token: z.string().min(1, "Token is required"),
+  otp_code: z.string().min(1, "OTP code is required"),
 });
 
 export const ResendOtpRequestSchema = z.object({
-  email: z.email(),
+  email: z.email().min(1, "Email is required"),
 });
 
 export const ForgotPasswordRequestSchema = z.object({
-  email: z.email(),
+  email: z.email().min(1, "Email is required"),
 });
 
 export const ForgotPasswordResponseSchema = z.object({
