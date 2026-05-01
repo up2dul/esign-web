@@ -1,8 +1,15 @@
 import { useForm } from "@tanstack/react-form";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, MailIcon, ShieldCheckIcon } from "lucide-react";
+import {
+  ArrowRight,
+  CheckCircleIcon,
+  InfoIcon,
+  MailIcon,
+  ShieldCheckIcon,
+} from "lucide-react";
 import { useState } from "react";
 
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -20,7 +27,7 @@ const ForgotPasswordPage = () => {
     validators: {
       onChange: ForgotPasswordRequestSchema,
     },
-    onSubmit: async ({ value }) => {
+    onSubmit: async ({ value, formApi }) => {
       setServerError(null);
       setSuccessMessage(null);
 
@@ -30,8 +37,13 @@ const ForgotPasswordPage = () => {
           res?.message ??
             "If an account exists for that email, we sent password reset instructions."
         );
-      } catch (err: any) {
-        setServerError(err?.message ?? "Failed to send reset instructions");
+        formApi.reset();
+      } catch (err: unknown) {
+        const message =
+          err instanceof Error
+            ? err.message
+            : "Failed to send reset instructions";
+        setServerError(message);
         throw err;
       }
     },
@@ -87,11 +99,19 @@ const ForgotPasswordPage = () => {
           </form.Field>
 
           {serverError && (
-            <p className="text-destructive text-sm">{serverError}</p>
+            <Alert variant="destructive" className="mt-2">
+              <InfoIcon />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{serverError}</AlertDescription>
+            </Alert>
           )}
 
           {successMessage && (
-            <p className="text-[#5f4f57] text-sm">{successMessage}</p>
+            <Alert className="mt-2 border-green-200 bg-green-50">
+              <CheckCircleIcon className="text-green-600" />
+              <AlertTitle>Success</AlertTitle>
+              <AlertDescription>{successMessage}</AlertDescription>
+            </Alert>
           )}
 
           <form.Subscribe

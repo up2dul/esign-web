@@ -1,8 +1,16 @@
 import { useForm } from "@tanstack/react-form";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, LockIcon, MailIcon, ShieldCheckIcon } from "lucide-react";
+import {
+  ArrowRight,
+  CheckCircleIcon,
+  InfoIcon,
+  LockIcon,
+  MailIcon,
+  ShieldCheckIcon,
+} from "lucide-react";
 import { useState } from "react";
 
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,23 +22,28 @@ import { useAuthStore } from "@/stores/auth-store";
 const LoginPage = () => {
   const login = useLogin();
   const [serverError, setServerError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const authStore = useAuthStore((state) => state);
 
   const form = useForm({
     defaultValues: { email: "", password: "" },
     validators: {
       onChange: LoginRequestSchema,
     },
-    onSubmit: async ({ value }) => {
+    onSubmit: async ({ value, formApi }) => {
       setServerError(null);
+      setSuccessMessage(null);
       try {
         const res = await login.mutateAsync(value);
-        // If backend returned a token in any shape, persist it
         const token = (res as any)?.data?.token ?? (res as any)?.token ?? null;
         if (token) {
-          useAuthStore.getState().setToken(token);
+          authStore.setToken(token);
         }
-      } catch (err: any) {
-        setServerError(err?.message ?? "Login failed");
+        setSuccessMessage("Login successful!");
+        formApi.reset();
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Login failed";
+        setServerError(message);
         throw err;
       }
     },
@@ -123,7 +136,19 @@ const LoginPage = () => {
           </form.Field>
 
           {serverError && (
-            <p className="text-destructive text-sm">{serverError}</p>
+            <Alert variant="destructive" className="mt-2">
+              <InfoIcon />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{serverError}</AlertDescription>
+            </Alert>
+          )}
+
+          {successMessage && (
+            <Alert className="mt-2 border-green-200 bg-green-50">
+              <CheckCircleIcon className="text-green-600" />
+              <AlertTitle>Success</AlertTitle>
+              <AlertDescription>{successMessage}</AlertDescription>
+            </Alert>
           )}
 
           <form.Subscribe
