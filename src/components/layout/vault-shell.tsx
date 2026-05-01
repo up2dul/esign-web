@@ -13,6 +13,7 @@ import { EsignBrand } from "@/components/layout/esign-brand";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Footer } from "./footer";
 
 type VaultShellProps = {
   children: ReactNode;
@@ -25,36 +26,42 @@ type NavItem = {
 };
 
 const topNavItems: NavItem[] = [
-  { key: "dashboard", label: "Dashboard", to: "/dashboard" },
-  { key: "documents", label: "Documents", to: "/documents" },
-  { key: "profile", label: "Profile", to: "/profile" },
+  { key: "dashboard", label: "Dashboard", to: "/app" },
+  { key: "documents", label: "Documents", to: "/app/documents" },
+  { key: "profile", label: "Profile", to: "/app/profile" },
 ];
 
 const sidebarItems = [
   {
     key: "overview",
     label: "Overview",
-    to: "/dashboard",
+    to: "/app",
     icon: LayoutGridIcon,
   },
   {
     key: "documents",
     label: "All Documents",
-    to: "/documents",
+    to: "/app/documents",
     icon: FileTextIcon,
   },
-  { key: "pending", label: "Pending", to: "/pending", icon: FileClockIcon },
-  { key: "archived", label: "Archived", to: "/archived", icon: ArchiveIcon },
+  { key: "pending", label: "Pending", to: "/app/pending", icon: FileClockIcon },
+  {
+    key: "archived",
+    label: "Archived",
+    to: "/app/archived",
+    icon: ArchiveIcon,
+  },
 ] as const;
 
-const footerLinks = ["Privacy Policy", "Terms of Service", "Contact"];
-
 function getTopSection(pathname: string) {
-  if (pathname.startsWith("/profile") || pathname.startsWith("/pending")) {
+  if (
+    pathname.startsWith("/app/profile") ||
+    pathname.startsWith("/app/pending")
+  ) {
     return "profile";
   }
 
-  if (pathname.startsWith("/documents")) {
+  if (pathname.startsWith("/app/documents")) {
     return "documents";
   }
 
@@ -62,19 +69,19 @@ function getTopSection(pathname: string) {
 }
 
 function getSidebarSection(pathname: string) {
-  if (pathname.startsWith("/profile")) {
+  if (pathname.startsWith("/app/profile")) {
     return "settings";
   }
 
-  if (pathname.startsWith("/pending")) {
+  if (pathname.startsWith("/app/pending")) {
     return "pending";
   }
 
-  if (pathname.startsWith("/archived")) {
+  if (pathname.startsWith("/app/archived")) {
     return "archived";
   }
 
-  if (pathname.startsWith("/documents")) {
+  if (pathname.startsWith("/app/documents")) {
     return "documents";
   }
 
@@ -93,11 +100,7 @@ export const VaultShell = ({ children }: VaultShellProps) => {
       <header className="border-[#e9d7dd]/80 border-b bg-[#f9f4f6]/95 backdrop-blur">
         <div className="mx-auto flex h-20 w-full max-w-7xl items-center justify-between gap-4 px-4 lg:px-8">
           <div className="flex items-center gap-6">
-            <Link
-              to="/dashboard"
-              className="shrink-0"
-              aria-label="Go to dashboard"
-            >
+            <Link to="/app" className="shrink-0" aria-label="Go to dashboard">
               <EsignBrand className="[&_p]:text-[1.2rem]" />
             </Link>
             <nav className="hidden items-center gap-5 md:flex">
@@ -183,7 +186,7 @@ export const VaultShell = ({ children }: VaultShellProps) => {
 
           <div className="mt-auto flex flex-col gap-2 pt-10">
             <Link
-              to="/profile"
+              to="/app/profile"
               className={cn(
                 "flex items-center gap-2 rounded-lg px-3 py-2 font-semibold text-[#4f3f47] text-[0.86rem] transition-colors",
                 sidebarSection === "settings"
@@ -207,16 +210,7 @@ export const VaultShell = ({ children }: VaultShellProps) => {
         <main className="px-4 py-8 lg:px-10 lg:py-10">{children}</main>
       </div>
 
-      <footer className="border-[#eadbe0] border-t px-4 py-6 text-[#8e7b84] text-[0.68rem] uppercase tracking-[0.2em] lg:px-8">
-        <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-4">
-          <span>© 2024 ESign Precision Curator</span>
-          <div className="flex items-center gap-7">
-            {footerLinks.map((item) => (
-              <span key={item}>{item}</span>
-            ))}
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };
