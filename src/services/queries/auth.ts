@@ -8,6 +8,7 @@ import type {
   VerifyOtpRequest,
 } from "@/lib/schemas/auth";
 import {
+  ApiErrorResponseSchema,
   ForgotPasswordRequestSchema,
   ForgotPasswordResponseSchema,
   LoginRequestSchema,
@@ -45,10 +46,18 @@ export const useLogin = () => {
   const login = useMutation<SuccessResponse, Error, LoginRequest>({
     mutationFn: async (data) => {
       const validated = LoginRequestSchema.parse(data);
-      const res = await api
-        .post(API_ROUTES.AUTH.LOGIN, { json: validated })
-        .json();
-      return SuccessResponseSchema.parse(res);
+      try {
+        const res = await api
+          .post(API_ROUTES.AUTH.LOGIN, { json: validated })
+          .json();
+        return SuccessResponseSchema.parse(res);
+      } catch (err: unknown) {
+        const error = err as { response?: { data?: unknown } };
+        const errorData = error?.response?.data;
+        const parsed = ApiErrorResponseSchema.safeParse(errorData);
+        const message = parsed.success ? parsed.data.message : "Login failed";
+        throw new Error(message);
+      }
     },
   });
   return login;
