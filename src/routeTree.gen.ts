@@ -9,33 +9,58 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SignRouteImport } from './routes/sign'
-import { Route as DocumentsRouteImport } from './routes/documents'
-import { Route as AppRouteImport } from './routes/_app'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AppProfileRouteImport } from './routes/_app/profile'
-import { Route as AppPendingRouteImport } from './routes/_app/pending'
-import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
-import { Route as AppArchivedRouteImport } from './routes/_app/archived'
+import { Route as AppIndexRouteImport } from './routes/app/index'
+import { Route as AuthRegisterRouteImport } from './routes/auth/register'
+import { Route as AuthLoginRouteImport } from './routes/auth/login'
+import { Route as AuthForgotPasswordRouteImport } from './routes/auth/forgot-password'
+import { Route as AppSignRouteImport } from './routes/app/sign'
+import { Route as AppProfileRouteImport } from './routes/app/profile'
+import { Route as AppPendingRouteImport } from './routes/app/pending'
+import { Route as AppDocumentsRouteImport } from './routes/app/documents'
+import { Route as AppArchivedRouteImport } from './routes/app/archived'
 
-const SignRoute = SignRouteImport.update({
-  id: '/sign',
-  path: '/sign',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DocumentsRoute = DocumentsRouteImport.update({
-  id: '/documents',
-  path: '/documents',
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppRoute = AppRouteImport.update({
-  id: '/_app',
+  id: '/app',
+  path: '/app',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppIndexRoute = AppIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AuthRegisterRoute = AuthRegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthLoginRoute = AuthLoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthForgotPasswordRoute = AuthForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AppSignRoute = AppSignRouteImport.update({
+  id: '/sign',
+  path: '/sign',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppProfileRoute = AppProfileRouteImport.update({
   id: '/profile',
@@ -47,9 +72,9 @@ const AppPendingRoute = AppPendingRouteImport.update({
   path: '/pending',
   getParentRoute: () => AppRoute,
 } as any)
-const AppDashboardRoute = AppDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
+const AppDocumentsRoute = AppDocumentsRouteImport.update({
+  id: '/documents',
+  path: '/documents',
   getParentRoute: () => AppRoute,
 } as any)
 const AppArchivedRoute = AppArchivedRouteImport.update({
@@ -60,91 +85,109 @@ const AppArchivedRoute = AppArchivedRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/documents': typeof DocumentsRoute
-  '/sign': typeof SignRoute
-  '/archived': typeof AppArchivedRoute
-  '/dashboard': typeof AppDashboardRoute
-  '/pending': typeof AppPendingRoute
-  '/profile': typeof AppProfileRoute
+  '/app': typeof AppRouteWithChildren
+  '/auth': typeof AuthRouteWithChildren
+  '/app/archived': typeof AppArchivedRoute
+  '/app/documents': typeof AppDocumentsRoute
+  '/app/pending': typeof AppPendingRoute
+  '/app/profile': typeof AppProfileRoute
+  '/app/sign': typeof AppSignRoute
+  '/auth/forgot-password': typeof AuthForgotPasswordRoute
+  '/auth/login': typeof AuthLoginRoute
+  '/auth/register': typeof AuthRegisterRoute
+  '/app/': typeof AppIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/documents': typeof DocumentsRoute
-  '/sign': typeof SignRoute
-  '/archived': typeof AppArchivedRoute
-  '/dashboard': typeof AppDashboardRoute
-  '/pending': typeof AppPendingRoute
-  '/profile': typeof AppProfileRoute
+  '/auth': typeof AuthRouteWithChildren
+  '/app/archived': typeof AppArchivedRoute
+  '/app/documents': typeof AppDocumentsRoute
+  '/app/pending': typeof AppPendingRoute
+  '/app/profile': typeof AppProfileRoute
+  '/app/sign': typeof AppSignRoute
+  '/auth/forgot-password': typeof AuthForgotPasswordRoute
+  '/auth/login': typeof AuthLoginRoute
+  '/auth/register': typeof AuthRegisterRoute
+  '/app': typeof AppIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/_app': typeof AppRouteWithChildren
-  '/documents': typeof DocumentsRoute
-  '/sign': typeof SignRoute
-  '/_app/archived': typeof AppArchivedRoute
-  '/_app/dashboard': typeof AppDashboardRoute
-  '/_app/pending': typeof AppPendingRoute
-  '/_app/profile': typeof AppProfileRoute
+  '/app': typeof AppRouteWithChildren
+  '/auth': typeof AuthRouteWithChildren
+  '/app/archived': typeof AppArchivedRoute
+  '/app/documents': typeof AppDocumentsRoute
+  '/app/pending': typeof AppPendingRoute
+  '/app/profile': typeof AppProfileRoute
+  '/app/sign': typeof AppSignRoute
+  '/auth/forgot-password': typeof AuthForgotPasswordRoute
+  '/auth/login': typeof AuthLoginRoute
+  '/auth/register': typeof AuthRegisterRoute
+  '/app/': typeof AppIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/documents'
-    | '/sign'
-    | '/archived'
-    | '/dashboard'
-    | '/pending'
-    | '/profile'
+    | '/app'
+    | '/auth'
+    | '/app/archived'
+    | '/app/documents'
+    | '/app/pending'
+    | '/app/profile'
+    | '/app/sign'
+    | '/auth/forgot-password'
+    | '/auth/login'
+    | '/auth/register'
+    | '/app/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/documents'
-    | '/sign'
-    | '/archived'
-    | '/dashboard'
-    | '/pending'
-    | '/profile'
+    | '/auth'
+    | '/app/archived'
+    | '/app/documents'
+    | '/app/pending'
+    | '/app/profile'
+    | '/app/sign'
+    | '/auth/forgot-password'
+    | '/auth/login'
+    | '/auth/register'
+    | '/app'
   id:
     | '__root__'
     | '/'
-    | '/_app'
-    | '/documents'
-    | '/sign'
-    | '/_app/archived'
-    | '/_app/dashboard'
-    | '/_app/pending'
-    | '/_app/profile'
+    | '/app'
+    | '/auth'
+    | '/app/archived'
+    | '/app/documents'
+    | '/app/pending'
+    | '/app/profile'
+    | '/app/sign'
+    | '/auth/forgot-password'
+    | '/auth/login'
+    | '/auth/register'
+    | '/app/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
-  DocumentsRoute: typeof DocumentsRoute
-  SignRoute: typeof SignRoute
+  AuthRoute: typeof AuthRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/sign': {
-      id: '/sign'
-      path: '/sign'
-      fullPath: '/sign'
-      preLoaderRoute: typeof SignRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/documents': {
-      id: '/documents'
-      path: '/documents'
-      fullPath: '/documents'
-      preLoaderRoute: typeof DocumentsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_app': {
-      id: '/_app'
-      path: ''
-      fullPath: '/'
+    '/app': {
+      id: '/app'
+      path: '/app'
+      fullPath: '/app'
       preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
     }
@@ -155,31 +198,66 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_app/profile': {
-      id: '/_app/profile'
+    '/app/': {
+      id: '/app/'
+      path: '/'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/auth/register': {
+      id: '/auth/register'
+      path: '/register'
+      fullPath: '/auth/register'
+      preLoaderRoute: typeof AuthRegisterRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/auth/login': {
+      id: '/auth/login'
+      path: '/login'
+      fullPath: '/auth/login'
+      preLoaderRoute: typeof AuthLoginRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/auth/forgot-password': {
+      id: '/auth/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/auth/forgot-password'
+      preLoaderRoute: typeof AuthForgotPasswordRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/app/sign': {
+      id: '/app/sign'
+      path: '/sign'
+      fullPath: '/app/sign'
+      preLoaderRoute: typeof AppSignRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/profile': {
+      id: '/app/profile'
       path: '/profile'
-      fullPath: '/profile'
+      fullPath: '/app/profile'
       preLoaderRoute: typeof AppProfileRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/pending': {
-      id: '/_app/pending'
+    '/app/pending': {
+      id: '/app/pending'
       path: '/pending'
-      fullPath: '/pending'
+      fullPath: '/app/pending'
       preLoaderRoute: typeof AppPendingRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/dashboard': {
-      id: '/_app/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AppDashboardRouteImport
+    '/app/documents': {
+      id: '/app/documents'
+      path: '/documents'
+      fullPath: '/app/documents'
+      preLoaderRoute: typeof AppDocumentsRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/archived': {
-      id: '/_app/archived'
+    '/app/archived': {
+      id: '/app/archived'
       path: '/archived'
-      fullPath: '/archived'
+      fullPath: '/app/archived'
       preLoaderRoute: typeof AppArchivedRouteImport
       parentRoute: typeof AppRoute
     }
@@ -188,25 +266,42 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppArchivedRoute: typeof AppArchivedRoute
-  AppDashboardRoute: typeof AppDashboardRoute
+  AppDocumentsRoute: typeof AppDocumentsRoute
   AppPendingRoute: typeof AppPendingRoute
   AppProfileRoute: typeof AppProfileRoute
+  AppSignRoute: typeof AppSignRoute
+  AppIndexRoute: typeof AppIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppArchivedRoute: AppArchivedRoute,
-  AppDashboardRoute: AppDashboardRoute,
+  AppDocumentsRoute: AppDocumentsRoute,
   AppPendingRoute: AppPendingRoute,
   AppProfileRoute: AppProfileRoute,
+  AppSignRoute: AppSignRoute,
+  AppIndexRoute: AppIndexRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
+interface AuthRouteChildren {
+  AuthForgotPasswordRoute: typeof AuthForgotPasswordRoute
+  AuthLoginRoute: typeof AuthLoginRoute
+  AuthRegisterRoute: typeof AuthRegisterRoute
+}
+
+const AuthRouteChildren: AuthRouteChildren = {
+  AuthForgotPasswordRoute: AuthForgotPasswordRoute,
+  AuthLoginRoute: AuthLoginRoute,
+  AuthRegisterRoute: AuthRegisterRoute,
+}
+
+const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
-  DocumentsRoute: DocumentsRoute,
-  SignRoute: SignRoute,
+  AuthRoute: AuthRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
