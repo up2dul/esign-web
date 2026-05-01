@@ -3,7 +3,7 @@ import { Grid2X2Icon, SearchIcon, SlidersHorizontalIcon } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 
 const documents = [
@@ -98,33 +98,17 @@ const DashboardPage = () => {
                   {document.status}
                 </Badge>
               </div>
+              <p className="font-medium text-[#8a7a82] text-[0.78rem]">
+                {document.modified}
+              </p>
             </CardHeader>
-            <CardContent className="px-4 pb-5 font-semibold text-[#8a7580] text-[0.78rem]">
-              {document.modified}
-            </CardContent>
           </Card>
         ))}
-
-        <Card className="grid min-h-88.75 place-content-center rounded-2xl border border-[#efc6d3] border-dashed bg-[#f9eff2] py-0 text-center ring-0">
-          <CardContent className="space-y-3 px-6 py-8">
-            <span className="mx-auto grid size-12 place-content-center rounded-full bg-[#f6dbe5] text-primary">
-              <span className="text-3xl leading-none">+</span>
-            </span>
-            <div>
-              <p className="font-black text-[#2b1823] text-[1.35rem]">
-                New Document
-              </p>
-              <p className="mt-1 text-[#7b6771] text-[0.84rem]">
-                Upload PDF or Docx
-              </p>
-            </div>
-          </CardContent>
-        </Card>
       </section>
     </div>
   );
 };
 
-export const Route = createFileRoute("/_app/dashboard")({
+export const Route = createFileRoute("/app/")({
   component: DashboardPage,
 });

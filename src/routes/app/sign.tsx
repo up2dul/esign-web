@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 
 import { EsignBrand } from "@/components/layout/esign-brand";
+import { Footer } from "@/components/layout/footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -30,7 +31,7 @@ const SignPage = () => {
 
           <div className="flex items-center gap-3">
             <Link
-              to="/dashboard"
+              to="/app"
               className="font-semibold text-[0.86rem] text-primary"
             >
               Save & Exit
@@ -193,20 +194,11 @@ const SignPage = () => {
         </section>
       </main>
 
-      <footer className="border-[#e7d4dc] border-t px-4 py-6 text-[#907c85] text-[0.66rem] uppercase tracking-[0.2em] lg:px-8">
-        <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-4">
-          <span>© 2024 ESign Precision Curator</span>
-          <div className="flex items-center gap-6">
-            <span>Security Audit</span>
-            <span>Privacy Policy</span>
-            <span>Certificate of Authenticity</span>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };
 
-export const Route = createFileRoute("/sign")({
+export const Route = createFileRoute("/app/sign")({
   component: SignPage,
 });

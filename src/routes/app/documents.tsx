@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 
 import { EsignBrand } from "@/components/layout/esign-brand";
+import { Footer } from "@/components/layout/footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -16,9 +17,9 @@ import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 
 const topNavItems = [
-  { label: "Dashboard", to: "/dashboard" },
-  { label: "Documents", to: "/documents" },
-  { label: "Profile", to: "/profile" },
+  { label: "Dashboard", to: "/app" },
+  { label: "Documents", to: "/app/documents" },
+  { label: "Profile", to: "/app/profile" },
 ] as const;
 
 const DocumentsSetupPage = () => {
@@ -26,7 +27,7 @@ const DocumentsSetupPage = () => {
     <div className="flex min-h-screen flex-col bg-background text-[#2d1b25]">
       <header className="border-[#e9d7dd] border-b bg-[#f9f4f6]/95 backdrop-blur">
         <div className="mx-auto flex h-20 w-full max-w-7xl items-center justify-between gap-4 px-4 lg:px-8">
-          <Link to="/dashboard" className="shrink-0">
+          <Link to="/app" className="shrink-0">
             <EsignBrand className="[&_p]:text-[1.2rem]" />
           </Link>
 
@@ -37,7 +38,7 @@ const DocumentsSetupPage = () => {
                 to={item.to}
                 className={cn(
                   "border-transparent border-b-2 px-0.5 pb-1 font-semibold text-[#68545f] text-[0.92rem] transition-colors",
-                  item.to === "/documents" && "border-primary text-primary"
+                  item.to === "/app/documents" && "border-primary text-primary"
                 )}
               >
                 {item.label}
@@ -180,13 +181,13 @@ const DocumentsSetupPage = () => {
 
             <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
               <Link
-                to="/dashboard"
+                to="/app"
                 className="inline-flex items-center gap-2 font-semibold text-[#5a4a52] transition-colors hover:text-primary"
               >
                 <ArrowLeftIcon className="size-4" />
                 Back to Dashboard
               </Link>
-              <Link to="/sign">
+              <Link to="/app/sign">
                 <Button className="h-11 rounded-lg px-8">
                   Prepare Signature Fields
                 </Button>
@@ -241,20 +242,11 @@ const DocumentsSetupPage = () => {
         </section>
       </main>
 
-      <footer className="border-[#eadbe0] border-t px-4 py-6 text-[#8e7b84] text-[0.68rem] uppercase tracking-[0.2em] lg:px-8">
-        <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-4">
-          <span>© 2024 ESign Precision Curator</span>
-          <div className="flex items-center gap-7">
-            <span>Privacy Policy</span>
-            <span>Terms of Service</span>
-            <span>Contact</span>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };
 
-export const Route = createFileRoute("/documents")({
+export const Route = createFileRoute("/app/documents")({
   component: DocumentsSetupPage,
 });

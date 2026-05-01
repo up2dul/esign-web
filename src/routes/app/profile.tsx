@@ -230,6 +230,6 @@ const ProfilePage = () => {
   );
 };
 
-export const Route = createFileRoute("/_app/profile")({
+export const Route = createFileRoute("/app/profile")({
   component: ProfilePage,
 });

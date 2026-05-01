@@ -162,6 +162,6 @@ const PendingPage = () => {
   );
 };
 
-export const Route = createFileRoute("/_app/pending")({
+export const Route = createFileRoute("/app/pending")({
   component: PendingPage,
 });

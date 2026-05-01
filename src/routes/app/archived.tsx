@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ArchiveIcon, DownloadIcon, FileTextIcon } from "lucide-react";
+import { DownloadIcon, FileTextIcon } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -49,9 +49,13 @@ const ArchivedPage = () => {
               <div className="grid h-32 place-content-center rounded-lg bg-white text-[#a68995]">
                 <FileTextIcon className="size-7" />
               </div>
-              <div className="flex items-center justify-between text-[#856f79] text-[0.8rem]">
-                <span>Last modified Nov 01, 2024</span>
-                <ArchiveIcon className="size-4" />
+              <div className="space-y-1.5">
+                <p className="text-[#5f4f57] text-[0.85rem]">
+                  Last modified: Oct 12, 2023
+                </p>
+                <p className="font-bold text-[#2b1823] text-[0.93rem]">
+                  File ID: {document.toLowerCase().replace(" ", "-")}
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -61,6 +65,6 @@ const ArchivedPage = () => {
   );
 };
 
-export const Route = createFileRoute("/_app/archived")({
+export const Route = createFileRoute("/app/archived")({
   component: ArchivedPage,
 });
