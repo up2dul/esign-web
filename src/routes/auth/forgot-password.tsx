@@ -1,0 +1,138 @@
+import { useForm } from "@tanstack/react-form";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { ArrowRight, MailIcon, ShieldCheckIcon } from "lucide-react";
+import { useState } from "react";
+
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { ForgotPasswordRequestSchema } from "@/lib/schemas/auth";
+import { formatFormErrors } from "@/lib/utils";
+import { useForgotPassword } from "@/services/queries/auth";
+
+const ForgotPasswordPage = () => {
+  const forgotPassword = useForgotPassword();
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  const form = useForm({
+    defaultValues: { email: "" },
+    validators: {
+      onChange: ForgotPasswordRequestSchema,
+    },
+    onSubmit: async ({ value }) => {
+      setServerError(null);
+      setSuccessMessage(null);
+
+      try {
+        const res = await forgotPassword.mutateAsync(value);
+        setSuccessMessage(
+          res?.message ??
+            "If an account exists for that email, we sent password reset instructions."
+        );
+      } catch (err: any) {
+        setServerError(err?.message ?? "Failed to send reset instructions");
+        throw err;
+      }
+    },
+  });
+
+  return (
+    <Card className="w-full max-w-md rounded-2xl border border-[#ebdce2] bg-[#faf4f7] py-0 ring-0">
+      <CardHeader className="space-y-2 px-5 pt-6 pb-3 sm:px-8">
+        <CardTitle className="font-black text-[#2b1823] text-[3rem] tracking-[-0.05em]">
+          Forgot Password
+        </CardTitle>
+        <p className="text-[#73606a]">We'll send a reset link to your inbox</p>
+      </CardHeader>
+
+      <CardContent className="space-y-4 px-5 pb-6 sm:px-8">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            form.handleSubmit();
+          }}
+          className="space-y-4"
+        >
+          <form.Field name="email">
+            {(field) => (
+              <div>
+                <label
+                  htmlFor="email"
+                  className="mb-1.5 block font-black text-[#8f7a83] text-[0.68rem] uppercase tracking-[0.2em]"
+                >
+                  Email Address
+                </label>
+                <div className="relative">
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="curator@esign.com"
+                    value={field.state.value as string}
+                    onBlur={field.handleBlur}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    className="h-11 rounded-lg border-[#ebd5dd] bg-white pr-10"
+                  />
+                  <MailIcon className="pointer-events-none absolute top-1/2 right-3.5 size-4 -translate-y-1/2 text-[#bea4ad]" />
+                </div>
+                {field.state.meta.isTouched &&
+                  field.state.meta.errors.length > 0 && (
+                    <p className="mt-1 text-destructive text-sm">
+                      {formatFormErrors(field.state.meta.errors)}
+                    </p>
+                  )}
+              </div>
+            )}
+          </form.Field>
+
+          {serverError && (
+            <p className="text-destructive text-sm">{serverError}</p>
+          )}
+
+          {successMessage && (
+            <p className="text-[#5f4f57] text-sm">{successMessage}</p>
+          )}
+
+          <form.Subscribe
+            selector={(s) => ({
+              canSubmit: s.canSubmit,
+              isSubmitting: s.isSubmitting,
+            })}
+          >
+            {({ canSubmit, isSubmitting }) => (
+              <Button
+                type="submit"
+                disabled={!canSubmit || isSubmitting}
+                className="h-11 w-full rounded-lg text-[0.95rem]"
+              >
+                {isSubmitting ? "Sending reset link..." : "Send reset link"}{" "}
+                <ArrowRight />
+              </Button>
+            )}
+          </form.Subscribe>
+        </form>
+
+        <p className="pt-2 text-center text-[#77636d] text-[0.86rem]">
+          Remember your password?{" "}
+          <Link to="/auth/login" className="font-semibold text-primary">
+            Sign In
+          </Link>
+        </p>
+
+        <div className="pt-5 text-center font-semibold text-[#a8949d] text-[0.64rem] uppercase tracking-[0.18em]">
+          <p className="inline-flex items-center gap-2">
+            <ShieldCheckIcon className="size-3.5" />
+            Secure Cloud
+            <span>•</span>
+            Legally Binding
+          </p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+export const Route = createFileRoute("/auth/forgot-password")({
+  component: ForgotPasswordPage,
+});
