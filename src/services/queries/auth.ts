@@ -52,8 +52,8 @@ export const useLogin = () => {
           .json();
         return SuccessResponseSchema.parse(res);
       } catch (err: unknown) {
-        const error = err as { response?: { data?: unknown } };
-        const errorData = error?.response?.data;
+        const error = err as { response?: Response; data?: unknown };
+        const errorData = error?.data ?? null;
         const parsed = ApiErrorResponseSchema.safeParse(errorData);
         const message = parsed.success ? parsed.data.message : "Login failed";
         throw new Error(message);
