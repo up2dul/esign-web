@@ -1,5 +1,5 @@
 import { useForm } from "@tanstack/react-form";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   ArrowRight,
   CheckCircleIcon,
@@ -20,6 +20,7 @@ import { formatFormErrors } from "@/lib/utils";
 import { useRegister } from "@/services/queries/auth";
 
 const RegisterPage = () => {
+  const navigate = useNavigate();
   const register = useRegister();
   const [serverError, setServerError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -33,9 +34,13 @@ const RegisterPage = () => {
       setServerError(null);
       setSuccessMessage(null);
       try {
-        const res = await register.mutateAsync(value);
-        setSuccessMessage(res.message ?? "OTP Sent");
+        await register.mutateAsync(value);
+        setSuccessMessage("OTP sent! Redirecting...");
         formApi.reset();
+        navigate({
+          to: "/auth/verify-otp",
+          search: { email: value.email },
+        });
       } catch (err: unknown) {
         const message =
           err instanceof Error ? err.message : "Registration failed";
