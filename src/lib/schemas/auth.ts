@@ -43,7 +43,11 @@ export const LoginRequestSchema = z.object({
 });
 
 export const VerifyOtpRequestSchema = z.object({
-  email: z.email().min(1, "Email is required"),
+  email: z
+    .email({
+      message: "Invalid email address",
+    })
+    .min(1, "Email is required"),
   otp: z.string().min(1, "OTP is required"),
 });
 
@@ -58,7 +62,11 @@ export const ResetPasswordRequestSchema = z.object({
 });
 
 export const ResendOtpRequestSchema = z.object({
-  email: z.email().min(1, "Email is required"),
+  email: z
+    .email({
+      message: "Invalid email address",
+    })
+    .min(1, "Email is required"),
 });
 
 export const ForgotPasswordRequestSchema = z.object({

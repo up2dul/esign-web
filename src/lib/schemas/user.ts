@@ -4,13 +4,13 @@ export const UserSchema = z.object({
   id: z.uuid(),
   name: z.string(),
   email: z.email(),
-  card_no: z.string(),
+  card_no: z.string().nullable(),
   is_email_verified: z.boolean(),
   is_verified: z.boolean(),
   is_face_recognized: z.boolean(),
   profile_picture: z.string().nullable(),
-  created_at: z.iso.datetime(),
-  updated_at: z.iso.datetime(),
+  created_at: z.iso.datetime().optional(),
+  updated_at: z.iso.datetime().optional(),
 });
 
 export const UserTokenResponseSchema = z.object({
