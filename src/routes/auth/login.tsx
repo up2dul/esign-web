@@ -1,8 +1,7 @@
 import { useForm } from "@tanstack/react-form";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   ArrowRight,
-  CheckCircleIcon,
   InfoIcon,
   LockIcon,
   MailIcon,
@@ -17,30 +16,25 @@ import { Input } from "@/components/ui/input";
 import { LoginRequestSchema } from "@/lib/schemas/auth";
 import { formatFormErrors } from "@/lib/utils";
 import { useLogin } from "@/services/queries/auth";
-import { useAuthStore } from "@/stores/auth-store";
 
 const LoginPage = () => {
   const login = useLogin();
+  const navigate = useNavigate();
   const [serverError, setServerError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const authStore = useAuthStore((state) => state);
 
   const form = useForm({
     defaultValues: { email: "", password: "" },
     validators: {
       onChange: LoginRequestSchema,
     },
-    onSubmit: async ({ value, formApi }) => {
+    onSubmit: async ({ value }) => {
       setServerError(null);
-      setSuccessMessage(null);
       try {
-        const res = await login.mutateAsync(value);
-        const token = (res as any)?.data?.token ?? (res as any)?.token ?? null;
-        if (token) {
-          authStore.setToken(token);
-        }
-        setSuccessMessage("Login successful!");
-        formApi.reset();
+        await login.mutateAsync(value);
+        await navigate({
+          to: "/auth/verify-otp",
+          search: { email: value.email },
+        });
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : "Login failed";
         setServerError(message);
@@ -140,14 +134,6 @@ const LoginPage = () => {
               <InfoIcon />
               <AlertTitle>Error</AlertTitle>
               <AlertDescription>{serverError}</AlertDescription>
-            </Alert>
-          )}
-
-          {successMessage && (
-            <Alert className="mt-2 border-green-200 bg-green-50">
-              <CheckCircleIcon className="text-green-600" />
-              <AlertTitle>Success</AlertTitle>
-              <AlertDescription>{successMessage}</AlertDescription>
             </Alert>
           )}
 
