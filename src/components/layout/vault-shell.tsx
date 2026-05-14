@@ -12,8 +12,20 @@ import type { ReactNode } from "react";
 import { EsignBrand } from "@/components/layout/esign-brand";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { useUserProfile } from "@/services/queries/user";
+import { Badge } from "../ui/badge";
 import { Footer } from "./footer";
+
+function getInitials(name: string): string {
+  return name
+    .split(" ")
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
+}
 
 type VaultShellProps = {
   children: ReactNode;
@@ -94,6 +106,8 @@ export const VaultShell = ({ children }: VaultShellProps) => {
   });
   const topSection = getTopSection(pathname);
   const sidebarSection = getSidebarSection(pathname);
+  const userProfile = useUserProfile();
+  const user = userProfile.data?.data;
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-[#2d1b25]">
@@ -137,20 +151,37 @@ export const VaultShell = ({ children }: VaultShellProps) => {
         <aside className="flex flex-col border-[#eadbe0] bg-[#f6edf0] px-4 py-5 lg:border-r lg:px-5 lg:py-7">
           <div className="rounded-2xl border border-[#ead5dc] bg-[#f4e8ec] p-3">
             <div className="flex items-center gap-2">
-              <Avatar size="lg" className="ring-2 ring-white/80">
-                <AvatarImage
-                  src="https://i.pravatar.cc/100?img=13"
-                  alt="Signature Vault user"
-                />
-                <AvatarFallback>SV</AvatarFallback>
-              </Avatar>
-              <div>
-                <p className="font-bold text-[#2f1c24] text-[0.95rem]">
-                  Signature Vault
-                </p>
-                <p className="font-semibold text-[0.66rem] text-primary/80 uppercase tracking-[0.16em]">
-                  Premium Plan
-                </p>
+              {userProfile.isLoading ? (
+                <Skeleton className="size-9 shrink-0 rounded-full" />
+              ) : (
+                <Avatar size="lg" className="ring-2 ring-white/80">
+                  {user?.profile_picture ? (
+                    <AvatarImage src={user.profile_picture} alt={user.name} />
+                  ) : null}
+                  <AvatarFallback>
+                    {user ? getInitials(user.name) : "—"}
+                  </AvatarFallback>
+                </Avatar>
+              )}
+              <div className="min-w-0">
+                {userProfile.isLoading ? (
+                  <>
+                    <Skeleton className="mb-1 h-4 w-24 rounded" />
+                    <Skeleton className="h-3 w-32 rounded" />
+                  </>
+                ) : (
+                  <>
+                    <p className="truncate font-bold text-[#2f1c24] text-[0.95rem]">
+                      {user?.name ?? "—"}
+                    </p>
+                    {/** add badge verification */}
+                    {user?.is_verified ? (
+                      <Badge className="bg-green-500">Verified</Badge>
+                    ) : (
+                      <Badge className="bg-red-500">Not Verified</Badge>
+                    )}
+                  </>
+                )}
               </div>
             </div>
             <Button
