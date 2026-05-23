@@ -19,18 +19,28 @@ export const DocumentSchema = z.object({
   user_id: z.uuid(),
   signed_file_id: z.uuid().nullable(),
   original_file_id: z.uuid(),
-  sign_id: z.uuid().nullable(),
+  sign_id: z.uuid().nullable().optional(),
   status: z.enum(["DRAFT", "SIGNED"]),
-  metadata: z.object({}).nullable(),
+  metadata: z.unknown().nullable().optional(),
   cover_url: z.string().nullable(),
+  file_name: z.string().nullable().optional(),
   created_at: z.iso.datetime(),
-  updated_at: z.iso.datetime(),
+  updated_at: z.iso.datetime().optional(),
 });
 
 export const DocumentListResponseSchema = z.object({
   success: z.boolean(),
   message: z.string(),
-  data: z.array(DocumentSchema),
+  data: z.object({
+    count_total_size: z.number(),
+    count_total_page: z.number(),
+    count_total: z.number(),
+    previous_page: z.number().nullable(),
+    next_page: z.number().nullable(),
+    rows_data: z.object({
+      docs: z.array(DocumentSchema),
+    }),
+  }),
 });
 
 export const DocumentPreviewResponseSchema = z.object({

@@ -23,7 +23,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSignSpecimenList, useSignUpload } from "@/services/queries/sign";
@@ -299,12 +298,14 @@ const ProfilePage = () => {
                 Signature Specimen
               </CardTitle>
               <Dialog open={open} onOpenChange={handleOpenChange}>
-                <DialogTrigger asChild>
-                  <Button className="h-9 gap-1.5 rounded-lg px-4 text-[0.84rem]">
-                    <PlusIcon className="size-3.5" />
-                    Draw Signature
-                  </Button>
-                </DialogTrigger>
+                <Button
+                  type="button"
+                  className="h-9 gap-1.5 rounded-lg px-4 text-[0.84rem]"
+                  onClick={() => setOpen(true)}
+                >
+                  <PlusIcon className="size-3.5" />
+                  Draw Signature
+                </Button>
                 <DialogContent className="max-w-2xl rounded-2xl">
                   <DialogHeader>
                     <DialogTitle className="font-black text-[#2b1823] text-[1.4rem] tracking-[-0.02em]">

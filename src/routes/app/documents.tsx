@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   ArrowLeftIcon,
@@ -7,6 +8,7 @@ import {
   PencilIcon,
   Trash2Icon,
 } from "lucide-react";
+import { type ChangeEvent, useRef, useState } from "react";
 
 import { EsignBrand } from "@/components/layout/esign-brand";
 import { Footer } from "@/components/layout/footer";
@@ -15,6 +17,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import { QUERY_KEYS } from "@/services/api-config";
+import { useDocumentUpload } from "@/services/queries/document";
 
 const topNavItems = [
   { label: "Dashboard", to: "/app" },
@@ -22,7 +26,87 @@ const topNavItems = [
   { label: "Profile", to: "/app/profile" },
 ] as const;
 
+type UploadFeedback = {
+  type: "success" | "error";
+  message: string;
+};
+
 const DocumentsSetupPage = () => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const queryClient = useQueryClient();
+  const documentUpload = useDocumentUpload();
+
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadFeedback, setUploadFeedback] = useState<UploadFeedback | null>(
+    null
+  );
+
+  const openFilePicker = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+
+    event.target.value = "";
+
+    if (!file) {
+      return;
+    }
+
+    const isPdf =
+      file.type === "application/pdf" ||
+      file.name.toLowerCase().endsWith(".pdf");
+
+    if (!isPdf) {
+      setSelectedFile(null);
+      setUploadFeedback({
+        type: "error",
+        message: "File harus berformat PDF.",
+      });
+      return;
+    }
+
+    if (file.size > 25 * 1024 * 1024) {
+      setSelectedFile(null);
+      setUploadFeedback({
+        type: "error",
+        message: "Ukuran file maksimal 25 MB.",
+      });
+      return;
+    }
+
+    setSelectedFile(file);
+    setUploadFeedback(null);
+
+    const formData = new FormData();
+
+    /*
+      Nama field "files" digunakan karena backend membaca
+      file upload dari collection files.
+    */
+    formData.append("files", file);
+
+    try {
+      await documentUpload.mutateAsync(formData);
+
+      await queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.DOCUMENT.LIST,
+      });
+
+      setUploadFeedback({
+        type: "success",
+        message: "Dokumen berhasil diunggah.",
+      });
+    } catch (error) {
+      setUploadFeedback({
+        type: "error",
+        message:
+          error instanceof Error ? error.message : "Dokumen gagal diunggah.",
+      });
+    }
+  };
+
   return (
     <div className="flex min-h-screen flex-col bg-background text-[#2d1b25]">
       <header className="border-[#e9d7dd] border-b bg-[#f9f4f6]/95 backdrop-blur">
@@ -53,7 +137,15 @@ const DocumentsSetupPage = () => {
             >
               Sign Out
             </Link>
-            <Button className="h-10 rounded-lg px-6">Upload</Button>
+
+            <Button
+              type="button"
+              className="h-10 rounded-lg px-6"
+              onClick={openFilePicker}
+              disabled={documentUpload.isPending}
+            >
+              {documentUpload.isPending ? "Uploading..." : "Upload"}
+            </Button>
           </div>
         </div>
       </header>
@@ -63,9 +155,11 @@ const DocumentsSetupPage = () => {
           <p className="font-black text-[0.68rem] text-primary uppercase tracking-[0.2em]">
             Step 01 of 03
           </p>
+
           <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-[#eed9e0]">
             <div className="h-full w-1/3 rounded-full bg-primary" />
           </div>
+
           <p className="mt-2 text-right font-semibold text-[#84717a] text-[0.74rem]">
             Upload & Setup
           </p>
@@ -77,27 +171,61 @@ const DocumentsSetupPage = () => {
               <h1 className="font-black text-5xl text-[#2b1823] tracking-[-0.03em]">
                 Select Document
               </h1>
+
               <p className="mt-2 text-[#715d67]">
-                Choose the file you wish to secure and sign.
+                Choose the PDF file you wish to secure and sign.
               </p>
 
               <Card className="mt-5 rounded-2xl border border-[#efc4d4] border-dashed bg-[#fcf3f6] py-0 ring-0">
                 <CardContent className="grid min-h-62.5 place-content-center px-5 py-7 text-center">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="application/pdf,.pdf"
+                    className="hidden"
+                    onChange={handleFileChange}
+                  />
+
                   <span className="mx-auto grid size-14 place-content-center rounded-full bg-[#f8dbe6] text-primary">
                     <FileUpIcon className="size-6" />
                   </span>
+
                   <p className="mt-4 font-black text-[#2e1d27] text-[1.35rem] tracking-[-0.02em]">
-                    Drop your PDF or Docx here
+                    Select your PDF document
                   </p>
+
                   <p className="mt-1 text-[#7d6872] text-[0.84rem]">
                     Maximum file size: 25MB
                   </p>
+
                   <Button
+                    type="button"
                     variant="outline"
                     className="mx-auto mt-5 h-10 rounded-lg border-[#ecc8d6] bg-white px-6 text-primary"
+                    onClick={openFilePicker}
+                    disabled={documentUpload.isPending}
                   >
-                    Browse Files
+                    {documentUpload.isPending ? "Uploading..." : "Browse PDF"}
                   </Button>
+
+                  {selectedFile && (
+                    <p className="mt-4 text-[#715d67] text-sm">
+                      File dipilih: {selectedFile.name}
+                    </p>
+                  )}
+
+                  {uploadFeedback && (
+                    <p
+                      className={cn(
+                        "mt-4 rounded-lg px-4 py-2 text-sm",
+                        uploadFeedback.type === "success"
+                          ? "bg-green-50 text-green-700"
+                          : "bg-red-50 text-red-700"
+                      )}
+                    >
+                      {uploadFeedback.message}
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -108,10 +236,12 @@ const DocumentsSetupPage = () => {
                   <h2 className="font-black text-[#2b1823] text-[2.1rem] tracking-[-0.03em]">
                     Add Recipients
                   </h2>
+
                   <p className="text-[#715d67]">
                     Specify who needs to view or sign this document.
                   </p>
                 </div>
+
                 <button
                   type="button"
                   className="flex items-center gap-1 font-semibold text-[0.82rem] text-primary"
@@ -126,24 +256,29 @@ const DocumentsSetupPage = () => {
                   <span className="grid size-8 place-content-center rounded-full bg-[#f7d8e3] font-bold text-[0.8rem] text-primary">
                     1
                   </span>
+
                   <div>
                     <p className="mb-1 font-semibold text-[#9c8790] text-[0.62rem] uppercase tracking-[0.14em]">
                       Full Name
                     </p>
+
                     <Input
                       className="h-10 rounded-lg border-[#ebd7de] bg-[#fcf7f9]"
                       placeholder="e.g. Alexander Vance"
                     />
                   </div>
+
                   <div>
                     <p className="mb-1 font-semibold text-[#9c8790] text-[0.62rem] uppercase tracking-[0.14em]">
                       Email Address
                     </p>
+
                     <Input
                       className="h-10 rounded-lg border-[#ebd7de] bg-[#fcf7f9]"
                       placeholder="alex@vault.co"
                     />
                   </div>
+
                   <div className="mb-2 flex items-center gap-2 text-[#8c7780]">
                     <PencilIcon className="size-4" />
                     <Trash2Icon className="size-4" />
@@ -166,15 +301,18 @@ const DocumentsSetupPage = () => {
                   <span className="grid size-8 place-content-center rounded-lg bg-white text-primary">
                     <PencilIcon className="size-4" />
                   </span>
+
                   <div>
                     <p className="font-bold text-[#2f2028] text-[0.95rem]">
                       Set Signing Order
                     </p>
+
                     <p className="text-[#836f78] text-[0.8rem]">
                       Document will be sent to recipients sequentially.
                     </p>
                   </div>
                 </div>
+
                 <Switch defaultChecked />
               </CardContent>
             </Card>
@@ -187,6 +325,7 @@ const DocumentsSetupPage = () => {
                 <ArrowLeftIcon className="size-4" />
                 Back to Dashboard
               </Link>
+
               <Link to="/app/sign">
                 <Button className="h-11 rounded-lg px-8">
                   Prepare Signature Fields
@@ -203,14 +342,16 @@ const DocumentsSetupPage = () => {
                   Pro Tips
                 </CardTitle>
               </CardHeader>
+
               <CardContent className="space-y-4 px-4 pb-4 text-[#705c67] text-[0.84rem] leading-relaxed">
                 <div>
                   <p className="font-bold text-[#2f2028]">Sequential Signing</p>
                   <p>
-                    Turn on "Signing Order" if specific stakeholders need to
-                    approve before others.
+                    Turn on &quot;Signing Order&quot; if specific stakeholders
+                    need to approve before others.
                   </p>
                 </div>
+
                 <div>
                   <p className="font-bold text-[#2f2028]">Accessibility</p>
                   <p>
@@ -226,12 +367,15 @@ const DocumentsSetupPage = () => {
                 <div className="grid h-28 place-content-center rounded-lg bg-white/20">
                   <FileUpIcon className="size-12" />
                 </div>
+
                 <p className="font-black text-[#ffd3e3] text-[0.7rem] uppercase tracking-[0.15em]">
                   Security Vault
                 </p>
+
                 <h3 className="font-black text-[1.55rem] tracking-[-0.03em]">
                   256-bit AES Encryption
                 </h3>
+
                 <p className="text-[#f5ddeb] text-[0.83rem]">
                   Every document uploaded to ESIGN is fragmented and encrypted
                   at rest.
