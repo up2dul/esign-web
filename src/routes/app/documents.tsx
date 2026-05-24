@@ -68,6 +68,9 @@ const DocumentsPage = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [numPages, setNumPages] = useState<number>(0);
+  const [pageDimensions, setPageDimensions] = useState<
+    Record<number, { width: number; height: number }>
+  >({});
 
   // Container sizing
   const containerRef = useRef<HTMLDivElement>(null);
@@ -249,15 +252,23 @@ const DocumentsPage = () => {
   // ---------------------------------------------------------------------------
   const handleSaveAndSign = useCallback(async () => {
     if (!uploadedDoc || !selectedSign) return;
+
+    const currentDims = pageDimensions[targetPage] || {
+      width: A4_WIDTH,
+      height: A4_HEIGHT,
+    };
+
     try {
       await documentSign.mutateAsync({
         document_id: uploadedDoc.id,
         sign_id: selectedSign.id,
         metadata: {
-          koor_x: Math.round(signPos.x * A4_WIDTH),
-          koor_y: Math.round(signPos.y * A4_HEIGHT),
-          width: Math.round(signPos.width * A4_WIDTH),
-          height: Math.round(signPos.height * A4_HEIGHT),
+          koor_x: Math.round(signPos.x * currentDims.width),
+          koor_y: Math.round(
+            (1 - signPos.y - signPos.height) * currentDims.height
+          ),
+          width: Math.round(signPos.width * currentDims.width),
+          height: Math.round(signPos.height * currentDims.height),
           page: targetPage,
         },
       });
@@ -265,7 +276,15 @@ const DocumentsPage = () => {
     } catch (err) {
       console.error("Sign failed", err);
     }
-  }, [uploadedDoc, selectedSign, signPos, targetPage, documentSign, navigate]);
+  }, [
+    uploadedDoc,
+    selectedSign,
+    signPos,
+    targetPage,
+    documentSign,
+    navigate,
+    pageDimensions,
+  ]);
 
   return (
     <div className="space-y-8">
@@ -572,6 +591,15 @@ const DocumentsPage = () => {
                         width={containerWidth}
                         renderTextLayer={false}
                         renderAnnotationLayer={false}
+                        onLoadSuccess={(page) => {
+                          setPageDimensions((prev) => ({
+                            ...prev,
+                            [index + 1]: {
+                              width: page.originalWidth,
+                              height: page.originalHeight,
+                            },
+                          }));
+                        }}
                       />
 
                       {/* Render overlay only if a signature is selected AND we're interacting with or viewing this page */}
@@ -595,8 +623,17 @@ const DocumentsPage = () => {
                           {(isDragging || isResizing) && (
                             <div className="absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-[#2b1823] px-2 py-0.5 text-[0.65rem] text-white">
                               Page {targetPage} |{" "}
-                              {Math.round(signPos.width * A4_WIDTH)}x
-                              {Math.round(signPos.height * A4_HEIGHT)}
+                              {Math.round(
+                                signPos.width *
+                                  (pageDimensions[targetPage]?.width ||
+                                    A4_WIDTH)
+                              )}
+                              x
+                              {Math.round(
+                                signPos.height *
+                                  (pageDimensions[targetPage]?.height ||
+                                    A4_HEIGHT)
+                              )}
                             </div>
                           )}
 
@@ -708,11 +745,27 @@ const DocumentsPage = () => {
                       Geometry
                     </p>
                     <p className="font-mono text-[#5f4e56] text-[0.84rem]">
-                      x: {Math.round(signPos.x * A4_WIDTH)}, y:{" "}
-                      {Math.round(signPos.y * A4_HEIGHT)}
+                      x:{" "}
+                      {Math.round(
+                        signPos.x *
+                          (pageDimensions[targetPage]?.width || A4_WIDTH)
+                      )}
+                      , y:{" "}
+                      {Math.round(
+                        signPos.y *
+                          (pageDimensions[targetPage]?.height || A4_HEIGHT)
+                      )}
                       <br />
-                      w: {Math.round(signPos.width * A4_WIDTH)}, h:{" "}
-                      {Math.round(signPos.height * A4_HEIGHT)}
+                      w:{" "}
+                      {Math.round(
+                        signPos.width *
+                          (pageDimensions[targetPage]?.width || A4_WIDTH)
+                      )}
+                      , h:{" "}
+                      {Math.round(
+                        signPos.height *
+                          (pageDimensions[targetPage]?.height || A4_HEIGHT)
+                      )}
                     </p>
                   </div>
                 </div>
