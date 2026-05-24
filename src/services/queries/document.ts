@@ -27,11 +27,11 @@ export const useDocumentList = () => {
   return documentList;
 };
 
-export const useDocumentPreview = (id: string) => {
+export const useDocumentPreview = (id: string, type?: string) => {
   const documentPreview = useQuery<DocumentPreviewResponse>({
-    queryKey: QUERY_KEYS.DOCUMENT.PREVIEW(id),
+    queryKey: QUERY_KEYS.DOCUMENT.PREVIEW(id, type),
     queryFn: async () => {
-      const res = await api.get(API_ROUTES.DOCUMENT.PREVIEW(id)).json();
+      const res = await api.get(API_ROUTES.DOCUMENT.PREVIEW(id, type)).json();
       return DocumentPreviewResponseSchema.parse(res);
     },
     enabled: Boolean(id),

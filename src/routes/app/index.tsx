@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Grid2X2Icon, SearchIcon, SlidersHorizontalIcon } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -23,8 +23,20 @@ function getStatusStyle(status: string): string {
 }
 
 const DashboardPage = () => {
+  const navigate = useNavigate();
   const documentList = useDocumentList();
   const docs = documentList.data?.data.rows_data.docs ?? [];
+
+  const handleCardClick = (doc: any) => {
+    if (doc.status === "DRAFT") {
+      navigate({ to: "/app/documents", search: { docId: doc.id } });
+    } else if (doc.status === "SIGNED") {
+      navigate({
+        to: "/app/documents/$docId/download",
+        params: { docId: doc.id },
+      });
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -94,7 +106,8 @@ const DashboardPage = () => {
           docs.map((doc) => (
             <Card
               key={doc.id}
-              className="overflow-hidden rounded-2xl border border-[#eedde3] bg-[#f7ecef] py-0 ring-0"
+              className="cursor-pointer overflow-hidden rounded-2xl border border-[#eedde3] bg-[#f7ecef] py-0 ring-0 transition-all hover:border-[#dfc9d2] hover:shadow-sm"
+              onClick={() => handleCardClick(doc)}
             >
               <div className="mx-4 mt-4 h-56 overflow-hidden rounded-xl bg-[#f2e8ec]">
                 {doc.cover_url ? (

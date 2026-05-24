@@ -1,13 +1,19 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
   CheckCircle2Icon,
-  ChevronRightIcon,
   FileUpIcon,
+  Maximize2Icon,
   PenLineIcon,
   UploadCloudIcon,
   XIcon,
 } from "lucide-react";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Document as PdfDocument, Page as PdfPage, pdfjs } from "react-pdf";
+
+import { z } from "zod";
+
+import "react-pdf/dist/Page/AnnotationLayer.css";
+import "react-pdf/dist/Page/TextLayer.css";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,10 +23,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { Document } from "@/lib/schemas/document";
 import type { SignSpecimen } from "@/lib/schemas/sign";
 import {
+  useDocumentPreview,
   useDocumentSign,
   useDocumentUpload,
 } from "@/services/queries/document";
 import { useSignSpecimenList } from "@/services/queries/sign";
+
+// Setup PDF.js worker
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 const ACCEPTED_TYPES = ["application/pdf"];
 const MAX_SIZE_MB = 25;
@@ -35,6 +45,7 @@ function formatBytes(bytes: number): string {
 
 const DocumentsPage = () => {
   const navigate = useNavigate();
+  const search = Route.useSearch();
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
 
   // Step 1 State
@@ -55,12 +66,49 @@ const DocumentsPage = () => {
     height: 0.1,
   });
   const [isDragging, setIsDragging] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
+  const [numPages, setNumPages] = useState<number>(0);
+
+  // Container sizing
   const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(500);
+
+  useEffect(() => {
+    if (containerRef.current) {
+      setContainerWidth(containerRef.current.clientWidth);
+    }
+  }, []);
 
   // Queries & Mutations
   const documentUpload = useDocumentUpload();
   const documentSign = useDocumentSign();
   const signSpecimenList = useSignSpecimenList();
+  const documentPreview = useDocumentPreview(
+    currentStep > 1 && uploadedDoc ? uploadedDoc.id : ""
+  );
+
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    // biome-ignore lint/suspicious/noExplicitAny: API shape
+    const bufData = (documentPreview.data?.buffer as any)?.data;
+    if (bufData) {
+      const bytes = new Uint8Array(bufData);
+      const blob = new Blob([bytes], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      setPdfUrl(url);
+      return () => URL.revokeObjectURL(url);
+    }
+    setPdfUrl(null);
+  }, [documentPreview.data]);
+
+  useEffect(() => {
+    // If we land on this page with a docId search param, automatically jump to step 2
+    if (search.docId && !uploadedDoc) {
+      setUploadedDoc({ id: search.docId } as Document);
+      setCurrentStep(2);
+    }
+  }, [search.docId, uploadedDoc]);
 
   // ---------------------------------------------------------------------------
   // Step 1 Handlers
@@ -129,47 +177,72 @@ const DocumentsPage = () => {
   }, [file, documentUpload]);
 
   // ---------------------------------------------------------------------------
-  // Step 2 Handlers
+  // Step 2 Interactions (Drag & Drop & Resize)
   // ---------------------------------------------------------------------------
-  const handlePointerDown = useCallback(
+  const handlePointerDownDrag = useCallback(
     (e: React.PointerEvent) => {
       if (!selectedSign) return;
       e.preventDefault();
+      e.stopPropagation();
       setIsDragging(true);
       e.currentTarget.setPointerCapture(e.pointerId);
     },
     [selectedSign]
   );
 
-  const handlePointerMove = useCallback(
-    (e: React.PointerEvent) => {
-      if (!isDragging || !containerRef.current) return;
+  const handlePointerDownResize = useCallback((e: React.PointerEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsResizing(true);
+    e.currentTarget.setPointerCapture(e.pointerId);
+  }, []);
+
+  const handlePointerMovePage = useCallback(
+    (e: React.PointerEvent, pageNum: number) => {
+      if (!containerRef.current) return;
+      if (!isDragging && !isResizing) return;
+
       const rect = containerRef.current.getBoundingClientRect();
 
-      // Calculate new center relative to container
-      let newX = (e.clientX - rect.left) / rect.width;
-      let newY = (e.clientY - rect.top) / rect.height;
+      if (isDragging) {
+        // We only allow dragging if we are on the target page
+        if (targetPage !== pageNum) {
+          setTargetPage(pageNum);
+        }
 
-      // Adjust so pointer is at center of the box, clamp to edges
-      newX = Math.max(0, Math.min(newX - signPos.width / 2, 1 - signPos.width));
-      newY = Math.max(
-        0,
-        Math.min(newY - signPos.height / 2, 1 - signPos.height)
-      );
+        let newX = (e.clientX - rect.left) / rect.width;
+        let newY = (e.clientY - rect.top) / rect.height;
 
-      setSignPos((prev) => ({ ...prev, x: newX, y: newY }));
+        newX = Math.max(
+          0,
+          Math.min(newX - signPos.width / 2, 1 - signPos.width)
+        );
+        newY = Math.max(
+          0,
+          Math.min(newY - signPos.height / 2, 1 - signPos.height)
+        );
+
+        setSignPos((prev) => ({ ...prev, x: newX, y: newY }));
+      } else if (isResizing && targetPage === pageNum) {
+        // Calculate new width/height based on bottom-right corner
+        let newW = (e.clientX - rect.left) / rect.width - signPos.x;
+        let newH = (e.clientY - rect.top) / rect.height - signPos.y;
+
+        // Min sizes
+        newW = Math.max(0.05, Math.min(newW, 1 - signPos.x));
+        newH = Math.max(0.05, Math.min(newH, 1 - signPos.y));
+
+        setSignPos((prev) => ({ ...prev, width: newW, height: newH }));
+      }
     },
-    [isDragging, signPos.width, signPos.height]
+    [isDragging, isResizing, signPos, targetPage]
   );
 
   const handlePointerUp = useCallback((e: React.PointerEvent) => {
     setIsDragging(false);
+    setIsResizing(false);
     e.currentTarget.releasePointerCapture(e.pointerId);
   }, []);
-
-  const handleContinueToReview = useCallback(() => {
-    if (selectedSign) setCurrentStep(3);
-  }, [selectedSign]);
 
   // ---------------------------------------------------------------------------
   // Step 3 Handlers
@@ -382,7 +455,7 @@ const DocumentsPage = () => {
                 Sign Document
               </h1>
               <p className="mt-2 text-[#705c67]">
-                Select a signature and place it on the document.
+                Select a signature and drag it onto the desired page.
               </p>
             </div>
             <Button variant="outline" onClick={() => setCurrentStep(1)}>
@@ -391,7 +464,7 @@ const DocumentsPage = () => {
           </section>
 
           <section className="grid gap-6 xl:grid-cols-[300px_1fr]">
-            {/* Left: Specimen Selection & Page Number */}
+            {/* Left: Specimen Selection */}
             <div className="space-y-6">
               <div className="space-y-3">
                 <p className="font-black text-[#2b1823] text-[1.2rem] tracking-[-0.02em]">
@@ -432,6 +505,7 @@ const DocumentsPage = () => {
                 )}
               </div>
 
+              {/* Target Page Selector */}
               <div className="space-y-3">
                 <p className="font-black text-[#2b1823] text-[1.2rem] tracking-[-0.02em]">
                   2. Target Page
@@ -440,77 +514,105 @@ const DocumentsPage = () => {
                   <Input
                     type="number"
                     min={1}
+                    max={numPages || 1}
                     value={targetPage}
-                    onChange={(e) => setTargetPage(Number(e.target.value) || 1)}
-                    className="w-24 text-center"
+                    onChange={(e) => {
+                      let val = Number.parseInt(e.target.value, 10);
+                      if (Number.isNaN(val)) val = 1;
+                      if (val < 1) val = 1;
+                      if (val > numPages) val = numPages;
+                      setTargetPage(val);
+                    }}
+                    className="w-20"
                   />
-                  <span className="text-[#705c67] text-[0.84rem]">
-                    Enter the page number to place the signature.
+                  <span className="text-[#705c67] text-sm">
+                    of {numPages || 1}
                   </span>
                 </div>
               </div>
 
               <Button
                 className="w-full gap-2"
-                disabled={!selectedSign}
-                onClick={handleContinueToReview}
+                disabled={!selectedSign || !pdfUrl}
+                onClick={() => setCurrentStep(3)}
               >
                 Continue to Review
-                <ChevronRightIcon className="size-4" />
               </Button>
             </div>
 
-            {/* Right: A4 Canvas */}
-            <div className="flex justify-center overflow-hidden rounded-2xl border border-[#ebdbe0] bg-[#faf5f7] p-6">
-              <div
-                ref={containerRef}
-                className="relative touch-none bg-white shadow-lg"
-                style={{
-                  width: "100%",
-                  maxWidth: "500px",
-                  aspectRatio: "595/842",
-                  backgroundImage: uploadedDoc.cover_url
-                    ? `url(${uploadedDoc.cover_url})`
-                    : "none",
-                  backgroundSize: "cover",
-                  backgroundPosition: "center",
-                }}
-                onPointerMove={handlePointerMove}
-              >
-                {!uploadedDoc.cover_url && (
-                  <div className="absolute inset-0 grid place-content-center border-2 border-[#e6d0d9] border-dashed">
-                    <p className="font-medium text-[#a8939e] text-[0.9rem]">
-                      Page {targetPage} Placeholder
-                    </p>
-                  </div>
-                )}
+            {/* Right: PDF Document Canvas */}
+            <div className="flex h-[800px] flex-col items-center overflow-y-auto rounded-2xl border border-[#ebdbe0] bg-[#eef0f2] p-6 shadow-inner">
+              {documentPreview.isLoading && (
+                <p className="text-[#a39098]">Loading document...</p>
+              )}
+              {pdfUrl && (
+                <PdfDocument
+                  file={pdfUrl}
+                  onLoadSuccess={({ numPages }) => setNumPages(numPages)}
+                  onLoadError={console.error}
+                  className="space-y-8"
+                >
+                  {Array.from({ length: numPages }, (_, index) => (
+                    <div
+                      key={`page_${index + 1}`}
+                      className="relative bg-white shadow-lg"
+                      style={{
+                        width: "100%",
+                        maxWidth: "600px",
+                        margin: "0 auto",
+                      }}
+                      ref={targetPage === index + 1 ? containerRef : null}
+                      onPointerDown={() => setTargetPage(index + 1)}
+                      onPointerMove={(e) => handlePointerMovePage(e, index + 1)}
+                      onPointerUp={handlePointerUp}
+                      onPointerLeave={handlePointerUp}
+                    >
+                      <PdfPage
+                        pageNumber={index + 1}
+                        width={containerWidth}
+                        renderTextLayer={false}
+                        renderAnnotationLayer={false}
+                      />
 
-                {selectedSign && (
-                  <div
-                    className="absolute cursor-move border border-primary bg-primary/10 shadow-sm"
-                    style={{
-                      left: `${signPos.x * 100}%`,
-                      top: `${signPos.y * 100}%`,
-                      width: `${signPos.width * 100}%`,
-                      height: `${signPos.height * 100}%`,
-                    }}
-                    onPointerDown={handlePointerDown}
-                    onPointerUp={handlePointerUp}
-                  >
-                    <img
-                      src={selectedSign.preview_url}
-                      alt="Selected signature"
-                      className="pointer-events-none h-full w-full object-contain"
-                    />
-                    {isDragging && (
-                      <div className="absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-[#2b1823] px-2 py-0.5 text-[0.65rem] text-white">
-                        x: {Math.round(signPos.x * A4_WIDTH)}, y:{" "}
-                        {Math.round(signPos.y * A4_HEIGHT)}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
+                      {/* Render overlay only if a signature is selected AND we're interacting with or viewing this page */}
+                      {selectedSign && targetPage === index + 1 && (
+                        <div
+                          className="absolute border-2 border-primary bg-primary/10 shadow-sm"
+                          style={{
+                            left: `${signPos.x * 100}%`,
+                            top: `${signPos.y * 100}%`,
+                            width: `${signPos.width * 100}%`,
+                            height: `${signPos.height * 100}%`,
+                            cursor: isDragging ? "grabbing" : "grab",
+                          }}
+                          onPointerDown={handlePointerDownDrag}
+                        >
+                          <img
+                            src={selectedSign.preview_url}
+                            alt="Selected signature"
+                            className="pointer-events-none h-full w-full object-fill"
+                          />
+                          {(isDragging || isResizing) && (
+                            <div className="absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-[#2b1823] px-2 py-0.5 text-[0.65rem] text-white">
+                              Page {targetPage} |{" "}
+                              {Math.round(signPos.width * A4_WIDTH)}x
+                              {Math.round(signPos.height * A4_HEIGHT)}
+                            </div>
+                          )}
+
+                          {/* Resize Handle */}
+                          <div
+                            className="absolute -right-3 -bottom-3 flex size-6 cursor-nwse-resize items-center justify-center rounded-full border border-white bg-primary text-white shadow-sm"
+                            onPointerDown={handlePointerDownResize}
+                          >
+                            <Maximize2Icon className="size-3 rotate-90" />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </PdfDocument>
+              )}
             </div>
           </section>
         </div>
@@ -525,7 +627,7 @@ const DocumentsPage = () => {
                 Review & Save
               </h1>
               <p className="mt-2 text-[#705c67]">
-                Review your configuration before finalizing the document.
+                Visual confirmation of your signature placement.
               </p>
             </div>
             <Button variant="outline" onClick={() => setCurrentStep(2)}>
@@ -533,7 +635,7 @@ const DocumentsPage = () => {
             </Button>
           </section>
 
-          <Card className="mx-auto max-w-2xl rounded-2xl border border-[#ebdbe0] bg-white py-0 ring-0">
+          <Card className="mx-auto max-w-4xl rounded-2xl border border-[#ebdbe0] bg-white py-0 ring-0">
             <CardContent className="space-y-6 px-6 py-6">
               <div className="flex items-center gap-4 border-[#f0e6e9] border-b pb-5">
                 <CheckCircle2Icon className="size-8 text-green-500" />
@@ -547,46 +649,72 @@ const DocumentsPage = () => {
                 </div>
               </div>
 
-              <div className="space-y-4">
-                <div className="grid grid-cols-[120px_1fr] items-center gap-4">
-                  <p className="font-semibold text-[#a39098] text-[0.75rem] uppercase tracking-wider">
-                    Document
-                  </p>
-                  <p className="truncate font-medium text-[#2b1823]">
-                    {file?.name ?? uploadedDoc.id}
-                  </p>
+              <div className="grid items-start gap-6 md:grid-cols-[2fr_1fr]">
+                {/* Visual Preview */}
+                <div className="flex justify-center rounded-xl border border-[#ebdbe0] bg-[#eef0f2] p-4">
+                  {pdfUrl && (
+                    <div
+                      className="pointer-events-none relative shadow-md"
+                      style={{ maxWidth: "300px" }}
+                    >
+                      <PdfDocument file={pdfUrl} onLoadError={console.error}>
+                        <PdfPage
+                          pageNumber={targetPage}
+                          width={300}
+                          renderTextLayer={false}
+                          renderAnnotationLayer={false}
+                        />
+                      </PdfDocument>
+                      <div
+                        className="absolute"
+                        style={{
+                          left: `${signPos.x * 100}%`,
+                          top: `${signPos.y * 100}%`,
+                          width: `${signPos.width * 100}%`,
+                          height: `${signPos.height * 100}%`,
+                        }}
+                      >
+                        <img
+                          src={selectedSign.preview_url}
+                          alt="Preview signature"
+                          className="h-full w-full object-fill"
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                <div className="grid grid-cols-[120px_1fr] items-center gap-4">
-                  <p className="font-semibold text-[#a39098] text-[0.75rem] uppercase tracking-wider">
-                    Signature
-                  </p>
-                  <div className="h-14 w-28 rounded border border-[#ebdbe0] bg-[#faf5f7]">
-                    <img
-                      src={selectedSign.preview_url}
-                      alt="Sign"
-                      className="h-full w-full object-contain p-1"
-                    />
+                <div className="space-y-4">
+                  <div className="grid grid-cols-[120px_1fr] items-center gap-4">
+                    <p className="font-semibold text-[#a39098] text-[0.75rem] uppercase tracking-wider">
+                      Document
+                    </p>
+                    <p className="truncate font-medium text-[#2b1823]">
+                      {file?.name ?? uploadedDoc.id}
+                    </p>
                   </div>
-                </div>
 
-                <div className="grid grid-cols-[120px_1fr] items-center gap-4">
-                  <p className="font-semibold text-[#a39098] text-[0.75rem] uppercase tracking-wider">
-                    Page
-                  </p>
-                  <Badge className="w-fit bg-[#f0e6e9] text-[#2b1823] hover:bg-[#e6d0d9]">
-                    Page {targetPage}
-                  </Badge>
-                </div>
+                  <div className="grid grid-cols-[120px_1fr] items-center gap-4">
+                    <p className="font-semibold text-[#a39098] text-[0.75rem] uppercase tracking-wider">
+                      Target Page
+                    </p>
+                    <Badge className="w-fit bg-[#f0e6e9] text-[#2b1823] hover:bg-[#e6d0d9]">
+                      Page {targetPage} of {numPages}
+                    </Badge>
+                  </div>
 
-                <div className="grid grid-cols-[120px_1fr] items-center gap-4">
-                  <p className="font-semibold text-[#a39098] text-[0.75rem] uppercase tracking-wider">
-                    Coordinates
-                  </p>
-                  <p className="font-mono text-[#5f4e56] text-[0.84rem]">
-                    x: {Math.round(signPos.x * A4_WIDTH)}, y:{" "}
-                    {Math.round(signPos.y * A4_HEIGHT)}
-                  </p>
+                  <div className="grid grid-cols-[120px_1fr] items-center gap-4">
+                    <p className="font-semibold text-[#a39098] text-[0.75rem] uppercase tracking-wider">
+                      Geometry
+                    </p>
+                    <p className="font-mono text-[#5f4e56] text-[0.84rem]">
+                      x: {Math.round(signPos.x * A4_WIDTH)}, y:{" "}
+                      {Math.round(signPos.y * A4_HEIGHT)}
+                      <br />
+                      w: {Math.round(signPos.width * A4_WIDTH)}, h:{" "}
+                      {Math.round(signPos.height * A4_HEIGHT)}
+                    </p>
+                  </div>
                 </div>
               </div>
 
@@ -615,5 +743,8 @@ const DocumentsPage = () => {
 };
 
 export const Route = createFileRoute("/app/documents")({
+  validateSearch: z.object({
+    docId: z.string().optional(),
+  }),
   component: DocumentsPage,
 });
