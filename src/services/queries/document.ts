@@ -9,7 +9,7 @@ import type {
 import {
   DocumentListResponseSchema,
   DocumentPreviewResponseSchema,
-  DocumentSchema,
+  DocumentResponseSchema,
   DocumentValidityResponseSchema,
   SignDocsRequestSchema,
 } from "@/lib/schemas/document";
@@ -57,7 +57,8 @@ export const useDocumentUpload = () => {
       const res = await api
         .post(API_ROUTES.DOCUMENT.UPLOAD, { body: formData })
         .json();
-      return DocumentSchema.parse(res);
+      const parsed = DocumentResponseSchema.parse(res);
+      return parsed.data;
     },
   });
   return documentUpload;
@@ -70,7 +71,8 @@ export const useDocumentSign = () => {
       const res = await api
         .post(API_ROUTES.DOCUMENT.SIGN, { json: validated })
         .json();
-      return DocumentSchema.parse(res);
+      const parsed = DocumentResponseSchema.parse(res);
+      return parsed.data;
     },
   });
   return documentSign;

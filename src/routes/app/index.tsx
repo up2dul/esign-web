@@ -5,35 +5,27 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useDocumentList } from "@/services/queries/document";
 
-const documents = [
-  {
-    title: "Design Brief",
-    status: "Pending",
-    statusClass: "bg-[#ffdce8] text-[#b90d5b]",
-    modified: "Modified 2 hours ago",
-    coverClass:
-      "bg-[linear-gradient(150deg,#f6eff2_0%,#f2e8ec_50%,#f9f2f5_100%)] text-[#ddb8c5]",
-  },
-  {
-    title: "Project Brief",
-    status: "Signed",
-    statusClass: "bg-[#d6f6df] text-[#128043]",
-    modified: "Modified Oct 24, 2024",
-    coverClass:
-      "bg-[linear-gradient(135deg,#1f2028_0%,#3c3d47_45%,#2f313a_100%)] text-[#8f95a8]",
-  },
-  {
-    title: "Business Proposal",
-    status: "Draft",
-    statusClass: "bg-[#efe4e8] text-[#9f7784]",
-    modified: "Modified Oct 20, 2024",
-    coverClass:
-      "bg-[linear-gradient(130deg,#f4f5f6_0%,#eceef0_55%,#f5f6f8_100%)] text-[#d8bec8]",
-  },
-] as const;
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function getStatusStyle(status: string): string {
+  if (status === "SIGNED") return "bg-[#d6f6df] text-[#128043]";
+  if (status === "DRAFT") return "bg-[#efe4e8] text-[#9f7784]";
+  return "bg-[#ffdce8] text-[#b90d5b]";
+}
 
 const DashboardPage = () => {
+  const documentList = useDocumentList();
+  const docs = documentList.data?.data.rows_data.docs ?? [];
+
   return (
     <div className="space-y-8">
       <section>
@@ -73,37 +65,72 @@ const DashboardPage = () => {
       </section>
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {documents.map((document) => (
-          <Card
-            key={document.title}
-            className="overflow-hidden rounded-2xl border border-[#eedde3] bg-[#f7ecef] py-0 ring-0"
-          >
+        {documentList.isLoading ? (
+          [1, 2, 3, 4].map((n) => (
             <div
-              className={`mx-4 mt-4 grid h-56 place-content-center rounded-xl text-center ${document.coverClass}`}
+              key={n}
+              className="overflow-hidden rounded-2xl border border-[#eedde3] bg-[#f7ecef]"
             >
-              <div className="space-y-2 opacity-70">
-                <div className="mx-auto h-2 w-24 rounded bg-current/50" />
-                <div className="mx-auto h-2 w-20 rounded bg-current/35" />
-                <div className="mx-auto mt-10 h-8 w-16 rounded-lg border border-current/40" />
+              <Skeleton className="mx-4 mt-4 h-56 rounded-xl" />
+              <div className="space-y-3 px-4 pt-5 pb-4">
+                <div className="flex items-center justify-between gap-2">
+                  <Skeleton className="h-7 w-32 rounded" />
+                  <Skeleton className="h-5 w-14 rounded-full" />
+                </div>
+                <Skeleton className="h-4 w-24 rounded" />
               </div>
             </div>
-            <CardHeader className="space-y-3 px-4 pt-5 pb-2">
-              <div className="flex items-center justify-between gap-2">
-                <CardTitle className="font-black text-[#2e1d27] text-[1.85rem] leading-[1.05] tracking-[-0.02em]">
-                  {document.title}
-                </CardTitle>
-                <Badge
-                  className={`rounded-full px-2.5 py-0.5 font-bold text-[0.58rem] uppercase tracking-[0.12em] ${document.statusClass}`}
-                >
-                  {document.status}
-                </Badge>
+          ))
+        ) : docs.length === 0 ? (
+          <div className="col-span-full flex flex-col items-center gap-3 py-16 text-center">
+            <p className="font-semibold text-[#7a6570] text-[0.9rem]">
+              No documents yet
+            </p>
+            <p className="text-[#9d8891] text-[0.8rem]">
+              Upload a document to get started.
+            </p>
+          </div>
+        ) : (
+          docs.map((doc) => (
+            <Card
+              key={doc.id}
+              className="overflow-hidden rounded-2xl border border-[#eedde3] bg-[#f7ecef] py-0 ring-0"
+            >
+              <div className="mx-4 mt-4 h-56 overflow-hidden rounded-xl bg-[#f2e8ec]">
+                {doc.cover_url ? (
+                  <img
+                    src={doc.cover_url}
+                    alt="Document cover"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="grid h-full place-content-center text-[#ddb8c5]">
+                    <div className="space-y-2 opacity-70">
+                      <div className="mx-auto h-2 w-24 rounded bg-current/50" />
+                      <div className="mx-auto h-2 w-20 rounded bg-current/35" />
+                      <div className="mx-auto mt-10 h-8 w-16 rounded-lg border border-current/40" />
+                    </div>
+                  </div>
+                )}
               </div>
-              <p className="font-medium text-[#8a7a82] text-[0.78rem]">
-                {document.modified}
-              </p>
-            </CardHeader>
-          </Card>
-        ))}
+              <CardHeader className="space-y-3 px-4 pt-5 pb-4">
+                <div className="flex items-center justify-between gap-2">
+                  <CardTitle className="truncate font-black text-[#2e1d27] text-[1.1rem] leading-[1.2] tracking-[-0.01em]">
+                    {doc.id.slice(0, 8).toUpperCase()}
+                  </CardTitle>
+                  <Badge
+                    className={`shrink-0 rounded-full px-2.5 py-0.5 font-bold text-[0.58rem] uppercase tracking-[0.12em] ${getStatusStyle(doc.status)}`}
+                  >
+                    {doc.status}
+                  </Badge>
+                </div>
+                <p className="font-medium text-[#8a7a82] text-[0.78rem]">
+                  {formatDate(doc.created_at)}
+                </p>
+              </CardHeader>
+            </Card>
+          ))
+        )}
       </section>
     </div>
   );
