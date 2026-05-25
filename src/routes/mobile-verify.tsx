@@ -1,11 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ShieldCheckIcon } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
 const MobileVerifyPage = () => {
   const params = new URLSearchParams(window.location.search);
   const userId = params.get("user_id");
+
+  const deeplinkUrl = userId
+    ? `zign://mobile-verify?user_id=${userId}`
+    : "zign://mobile-verify";
+
+  const handleOpenMobileApp = () => {
+    window.location.href = deeplinkUrl;
+  };
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#fbf7f9] px-4">
@@ -33,6 +42,24 @@ const MobileVerifyPage = () => {
               {userId ?? "-"}
             </p>
           </div>
+
+          <div className="w-full rounded-xl bg-[#f8f1f4] p-4 text-left">
+            <p className="font-semibold text-[#9d8891] text-[0.7rem] uppercase tracking-[0.14em]">
+              Deeplink
+            </p>
+            <p className="mt-1 break-all font-medium text-[#2f2028] text-sm">
+              {deeplinkUrl}
+            </p>
+          </div>
+
+          <Button
+            type="button"
+            className="mt-2 h-11 w-full rounded-xl"
+            onClick={handleOpenMobileApp}
+            disabled={!userId}
+          >
+            Open Mobile App
+          </Button>
         </CardContent>
       </Card>
     </main>
