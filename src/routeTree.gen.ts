@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as MobileVerifyRouteImport } from './routes/mobile-verify'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
@@ -23,6 +24,11 @@ import { Route as AppPendingRouteImport } from './routes/app/pending'
 import { Route as AppDocumentsRouteImport } from './routes/app/documents'
 import { Route as AppArchivedRouteImport } from './routes/app/archived'
 
+const MobileVerifyRoute = MobileVerifyRouteImport.update({
+  id: '/mobile-verify',
+  path: '/mobile-verify',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -93,6 +99,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRouteWithChildren
+  '/mobile-verify': typeof MobileVerifyRoute
   '/app/archived': typeof AppArchivedRoute
   '/app/documents': typeof AppDocumentsRoute
   '/app/pending': typeof AppPendingRoute
@@ -107,6 +114,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRouteWithChildren
+  '/mobile-verify': typeof MobileVerifyRoute
   '/app/archived': typeof AppArchivedRoute
   '/app/documents': typeof AppDocumentsRoute
   '/app/pending': typeof AppPendingRoute
@@ -123,6 +131,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRouteWithChildren
+  '/mobile-verify': typeof MobileVerifyRoute
   '/app/archived': typeof AppArchivedRoute
   '/app/documents': typeof AppDocumentsRoute
   '/app/pending': typeof AppPendingRoute
@@ -140,6 +149,7 @@ export interface FileRouteTypes {
     | '/'
     | '/app'
     | '/auth'
+    | '/mobile-verify'
     | '/app/archived'
     | '/app/documents'
     | '/app/pending'
@@ -154,6 +164,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/mobile-verify'
     | '/app/archived'
     | '/app/documents'
     | '/app/pending'
@@ -169,6 +180,7 @@ export interface FileRouteTypes {
     | '/'
     | '/app'
     | '/auth'
+    | '/mobile-verify'
     | '/app/archived'
     | '/app/documents'
     | '/app/pending'
@@ -185,10 +197,18 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
   AuthRoute: typeof AuthRouteWithChildren
+  MobileVerifyRoute: typeof MobileVerifyRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/mobile-verify': {
+      id: '/mobile-verify'
+      path: '/mobile-verify'
+      fullPath: '/mobile-verify'
+      preLoaderRoute: typeof MobileVerifyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -323,6 +343,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
   AuthRoute: AuthRouteWithChildren,
+  MobileVerifyRoute: MobileVerifyRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
