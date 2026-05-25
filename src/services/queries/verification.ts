@@ -1,6 +1,12 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import type { VerificationSuccessResponse } from "@/lib/schemas/verification";
-import { VerificationSuccessResponseSchema } from "@/lib/schemas/verification";
+import type {
+  VerificationQrUrlResponse,
+  VerificationSuccessResponse,
+} from "@/lib/schemas/verification";
+import {
+  VerificationQrUrlResponseSchema,
+  VerificationSuccessResponseSchema,
+} from "@/lib/schemas/verification";
 import { api } from "@/services/api";
 import { API_ROUTES, QUERY_KEYS } from "@/services/api-config";
 
@@ -17,6 +23,7 @@ export const useVerificationOcr = () => {
       return VerificationSuccessResponseSchema.parse(res);
     },
   });
+
   return verificationOcr;
 };
 
@@ -33,7 +40,20 @@ export const useVerificationFaceRecognition = () => {
       return VerificationSuccessResponseSchema.parse(res);
     },
   });
+
   return verificationFaceRecognition;
+};
+
+export const useVerificationQrUrl = () => {
+  const verificationQrUrl = useQuery<VerificationQrUrlResponse>({
+    queryKey: QUERY_KEYS.VERIFICATION.QR_URL,
+    queryFn: async () => {
+      const res = await api.get(API_ROUTES.VERIFICATION.QR_URL).json();
+      return VerificationQrUrlResponseSchema.parse(res);
+    },
+  });
+
+  return verificationQrUrl;
 };
 
 export const useHealthCheck = () => {
@@ -41,5 +61,6 @@ export const useHealthCheck = () => {
     queryKey: QUERY_KEYS.HEALTHCHECK,
     queryFn: () => api.get(API_ROUTES.HEALTHCHECK).json(),
   });
+
   return healthCheck;
 };

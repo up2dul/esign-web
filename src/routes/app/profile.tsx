@@ -7,6 +7,7 @@ import {
   PlusIcon,
   ShieldIcon,
 } from "lucide-react";
+import { QRCodeCanvas } from "qrcode.react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
@@ -27,6 +28,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSignSpecimenList, useSignUpload } from "@/services/queries/sign";
 import { useUserProfile } from "@/services/queries/user";
+import { useVerificationQrUrl } from "@/services/queries/verification";
 
 function getInitials(name: string): string {
   return name
@@ -191,6 +193,7 @@ const SpecimenCard = ({ previewUrl }: { previewUrl: string }) => (
 const ProfilePage = () => {
   const userProfile = useUserProfile();
   const user = userProfile.data?.data;
+  const verificationQrUrl = useVerificationQrUrl();
 
   const signSpecimenList = useSignSpecimenList();
   const signUpload = useSignUpload();
@@ -287,6 +290,50 @@ const ProfilePage = () => {
           </CardContent>
         </Card>
       </section>
+
+      {/* Verification QR */}
+      {true && (
+        <section className="grid gap-5 xl:grid-cols-[1.75fr_1fr]">
+          <Card className="rounded-2xl border border-[#ebdbe0] bg-white py-0 ring-0">
+            <CardHeader className="px-5 pt-5 pb-3">
+              <CardTitle className="flex items-center gap-2 font-black text-[#2b1823] text-[1.6rem] tracking-[-0.02em]">
+                <ShieldIcon className="size-4 text-primary" />
+                Verification QR
+              </CardTitle>
+            </CardHeader>
+
+            <CardContent className="px-5 pb-5">
+              {verificationQrUrl.isLoading ? (
+                <Skeleton className="h-56 w-56 rounded-xl" />
+              ) : verificationQrUrl.isError ? (
+                <div className="rounded-xl bg-red-50 p-4 text-red-600 text-sm">
+                  Failed to load verification QR.
+                </div>
+              ) : (
+                <div className="flex flex-col items-start gap-4">
+                  <div className="rounded-xl border border-[#ebdbe0] bg-white p-4">
+                    <QRCodeCanvas
+                      value={verificationQrUrl.data?.data.url ?? ""}
+                      size={220}
+                      level="H"
+                      includeMargin
+                    />
+                  </div>
+
+                  <div>
+                    <p className="font-semibold text-[#2f2028] text-[0.95rem]">
+                      Scan QR from mobile to verify your account
+                    </p>
+                    <p className="mt-1 break-all text-[#7a6570] text-[0.8rem]">
+                      {verificationQrUrl.data?.data.url}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </section>
+      )}
 
       {/* Signature Specimen */}
       <section className="grid gap-5 xl:grid-cols-[1.75fr_1fr]">

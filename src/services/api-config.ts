@@ -10,6 +10,7 @@ export const API_ROUTES = {
   VERIFICATION: {
     OCR: "/v1/verification/ocr",
     FACE_RECOGNITION: "/v1/verification/face-recognition",
+    QR_URL: "/v1/verification/qr-url",
   },
   DOCUMENT: {
     UPLOAD: "/v1/document/upload",
@@ -34,6 +35,9 @@ export const QUERY_KEYS = {
   AUTH: {
     VERIFY_OTP: ["auth", "verify-otp"] as const,
     RESEND_OTP: ["auth", "resend-otp"] as const,
+  },
+  VERIFICATION: {
+    QR_URL: ["verification", "qr-url"] as const,
   },
   DOCUMENT: {
     LIST: ["document", "list"] as const,
