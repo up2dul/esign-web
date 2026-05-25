@@ -292,7 +292,7 @@ const ProfilePage = () => {
       </section>
 
       {/* Verification QR */}
-      {true && (
+      {!user?.is_verified && (
         <section className="grid gap-5 xl:grid-cols-[1.75fr_1fr]">
           <Card className="rounded-2xl border border-[#ebdbe0] bg-white py-0 ring-0">
             <CardHeader className="px-5 pt-5 pb-3">
