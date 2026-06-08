@@ -93,7 +93,6 @@ const DocumentsPage = () => {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    // biome-ignore lint/suspicious/noExplicitAny: API shape
     const bufData = (documentPreview.data?.buffer as any)?.data;
     if (bufData) {
       const bytes = new Uint8Array(bufData);

@@ -41,7 +41,7 @@ export const QUERY_KEYS = {
   DOCUMENT: {
     LIST: ["document", "list"] as const,
     PREVIEW: (id: string, type?: string) =>
-      ["document", "preview", id, type].filter(Boolean) as const,
+      ["document", "preview", id, type].filter(Boolean) as readonly string[],
     VALIDITY: (id: string) => ["document", "validity", id] as const,
   },
   SIGN: {
