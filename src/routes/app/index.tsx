@@ -150,5 +150,8 @@ const DashboardPage = () => {
 };
 
 export const Route = createFileRoute("/app/")({
+  head: () => ({
+    meta: [{ title: "Dashboard - Esign" }],
+  }),
   component: DashboardPage,
 });

@@ -13,6 +13,9 @@ const AuthLayoutComponent = () => {
 };
 
 export const Route = createFileRoute("/auth")({
+  head: () => ({
+    meta: [{ title: "Esign" }],
+  }),
   beforeLoad: async () => {
     try {
       await api.get(API_ROUTES.USER.PROFILE).json();

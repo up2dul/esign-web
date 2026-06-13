@@ -163,5 +163,8 @@ const PendingPage = () => {
 };
 
 export const Route = createFileRoute("/app/pending")({
+  head: () => ({
+    meta: [{ title: "Pending - Esign" }],
+  }),
   component: PendingPage,
 });

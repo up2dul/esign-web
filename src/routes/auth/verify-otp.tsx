@@ -238,6 +238,9 @@ const VerifyOtpPage = () => {
 };
 
 export const Route = createFileRoute("/auth/verify-otp")({
+  head: () => ({
+    meta: [{ title: "Verify OTP - Esign" }],
+  }),
   component: VerifyOtpPage,
   beforeLoad: ({ search }) => {
     const email = search.email as string;

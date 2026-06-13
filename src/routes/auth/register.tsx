@@ -244,5 +244,8 @@ const RegisterPage = () => {
 };
 
 export const Route = createFileRoute("/auth/register")({
+  head: () => ({
+    meta: [{ title: "Create Account - Esign" }],
+  }),
   component: RegisterPage,
 });

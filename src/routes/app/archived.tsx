@@ -66,5 +66,8 @@ const ArchivedPage = () => {
 };
 
 export const Route = createFileRoute("/app/archived")({
+  head: () => ({
+    meta: [{ title: "Archived - Esign" }],
+  }),
   component: ArchivedPage,
 });

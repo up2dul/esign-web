@@ -176,5 +176,8 @@ const LoginPage = () => {
 };
 
 export const Route = createFileRoute("/auth/login")({
+  head: () => ({
+    meta: [{ title: "Sign In - Esign" }],
+  }),
   component: LoginPage,
 });
