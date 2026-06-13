@@ -1,7 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
-  ArchiveIcon,
-  FileClockIcon,
   FileTextIcon,
   LayoutGridIcon,
   LogOutIcon,
@@ -35,18 +33,6 @@ type VaultShellProps = {
   children: ReactNode;
 };
 
-type NavItem = {
-  key: string;
-  label: string;
-  to: string;
-};
-
-const topNavItems: NavItem[] = [
-  { key: "dashboard", label: "Dashboard", to: "/app" },
-  { key: "documents", label: "Documents", to: "/app/documents" },
-  { key: "profile", label: "Profile", to: "/app/profile" },
-];
-
 const sidebarItems = [
   {
     key: "overview",
@@ -60,13 +46,6 @@ const sidebarItems = [
     to: "/app/documents",
     icon: FileTextIcon,
   },
-  { key: "pending", label: "Pending", to: "/app/pending", icon: FileClockIcon },
-  {
-    key: "archived",
-    label: "Archived",
-    to: "/app/archived",
-    icon: ArchiveIcon,
-  },
   {
     key: "settings",
     label: "Settings",
@@ -74,21 +53,6 @@ const sidebarItems = [
     icon: SettingsIcon,
   },
 ] as const;
-
-function getTopSection(pathname: string) {
-  if (
-    pathname.startsWith("/app/profile") ||
-    pathname.startsWith("/app/pending")
-  ) {
-    return "profile";
-  }
-
-  if (pathname.startsWith("/app/documents")) {
-    return "documents";
-  }
-
-  return "dashboard";
-}
 
 function getSidebarSection(pathname: string) {
   if (pathname.startsWith("/app/profile")) {
@@ -115,7 +79,6 @@ export const VaultShell = ({ children }: VaultShellProps) => {
     select: (state) => state.location.pathname,
   });
   const navigate = useNavigate();
-  const topSection = getTopSection(pathname);
   const sidebarSection = getSidebarSection(pathname);
   const clearAuth = useAuthStore((state) => state.clearAuth);
   const userProfile = useUserProfile();
@@ -130,25 +93,9 @@ export const VaultShell = ({ children }: VaultShellProps) => {
     <div className="flex min-h-screen flex-col bg-background text-[#2d1b25]">
       <header className="border-[#e9d7dd]/80 border-b bg-[#f9f4f6]/95 backdrop-blur">
         <div className="mx-auto flex h-20 w-full max-w-7xl items-center justify-between gap-4 px-4 lg:px-8">
-          <div className="flex items-center gap-6">
-            <Link to="/app" className="shrink-0" aria-label="Go to dashboard">
-              <EsignBrand className="[&_p]:text-[1.2rem]" />
-            </Link>
-            <nav className="hidden items-center gap-5 md:flex">
-              {topNavItems.map((item) => (
-                <Link
-                  key={item.key}
-                  to={item.to}
-                  className={cn(
-                    "border-transparent border-b-2 px-0.5 pb-1 font-semibold text-[#68545f] text-[0.92rem] transition-colors",
-                    topSection === item.key && "border-primary text-primary"
-                  )}
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
-          </div>
+          <Link to="/app" className="shrink-0" aria-label="Go to dashboard">
+            <EsignBrand className="[&_p]:text-[1.2rem]" />
+          </Link>
 
           <div className="flex items-center gap-3">
             <AlertDialog>
