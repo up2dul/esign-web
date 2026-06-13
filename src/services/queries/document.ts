@@ -1,5 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { ApiErrorResponseSchema } from "@/lib/schemas/auth";
 import type {
   Document,
   DocumentListResponse,
@@ -55,11 +56,21 @@ export const useDocumentValidity = (id: string) => {
 export const useDocumentUpload = () => {
   const documentUpload = useMutation<Document, Error, FormData>({
     mutationFn: async (formData) => {
-      const res = await api
-        .post(API_ROUTES.DOCUMENT.UPLOAD, { body: formData })
-        .json();
-      const parsed = DocumentResponseSchema.parse(res);
-      return parsed.data;
+      try {
+        const res = await api
+          .post(API_ROUTES.DOCUMENT.UPLOAD, { body: formData })
+          .json();
+        const parsed = DocumentResponseSchema.parse(res);
+        return parsed.data;
+      } catch (err: unknown) {
+        const error = err as { data?: unknown };
+        const errorData = error?.data ?? null;
+        const parsed = ApiErrorResponseSchema.safeParse(errorData);
+        const message = parsed.success
+          ? parsed.data.message
+          : "Failed to upload document";
+        throw new Error(message);
+      }
     },
     onSuccess: () => {
       toast.success("Document uploaded successfully");
@@ -75,11 +86,21 @@ export const useDocumentSign = () => {
   const documentSign = useMutation<Document, Error, SignDocsRequest>({
     mutationFn: async (data) => {
       const validated = SignDocsRequestSchema.parse(data);
-      const res = await api
-        .post(API_ROUTES.DOCUMENT.SIGN, { json: validated })
-        .json();
-      const parsed = DocumentResponseSchema.parse(res);
-      return parsed.data;
+      try {
+        const res = await api
+          .post(API_ROUTES.DOCUMENT.SIGN, { json: validated })
+          .json();
+        const parsed = DocumentResponseSchema.parse(res);
+        return parsed.data;
+      } catch (err: unknown) {
+        const error = err as { data?: unknown };
+        const errorData = error?.data ?? null;
+        const parsed = ApiErrorResponseSchema.safeParse(errorData);
+        const message = parsed.success
+          ? parsed.data.message
+          : "Failed to sign document";
+        throw new Error(message);
+      }
     },
     onSuccess: () => {
       toast.success("Document signed successfully");
