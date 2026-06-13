@@ -1,7 +1,6 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   ArchiveIcon,
-  CircleHelpIcon,
   FileClockIcon,
   FileTextIcon,
   LayoutGridIcon,
@@ -67,6 +66,12 @@ const sidebarItems = [
     label: "Archived",
     to: "/app/archived",
     icon: ArchiveIcon,
+  },
+  {
+    key: "settings",
+    label: "Settings",
+    to: "/app/profile",
+    icon: SettingsIcon,
   },
 ] as const;
 
@@ -246,28 +251,6 @@ export const VaultShell = ({ children }: VaultShellProps) => {
                 </Link>
               );
             })}
-          </div>
-
-          <div className="mt-auto flex flex-col gap-2 pt-10">
-            <Link
-              to="/app/profile"
-              className={cn(
-                "flex items-center gap-2 rounded-lg px-3 py-2 font-semibold text-[#4f3f47] text-[0.86rem] transition-colors",
-                sidebarSection === "settings"
-                  ? "bg-white text-primary shadow-[inset_0_0_0_1px_rgba(188,18,101,0.12)]"
-                  : "hover:bg-white/70"
-              )}
-            >
-              <SettingsIcon className="size-4" />
-              Settings
-            </Link>
-            <button
-              type="button"
-              className="flex items-center gap-2 rounded-lg px-3 py-2 text-left font-semibold text-[#4f3f47] text-[0.86rem] transition-colors hover:bg-white/70"
-            >
-              <CircleHelpIcon className="size-4" />
-              Support
-            </button>
           </div>
         </aside>
 
