@@ -1,396 +1,802 @@
-import { useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
-  ArrowLeftIcon,
-  CirclePlusIcon,
+  CheckCircle2Icon,
   FileUpIcon,
-  LightbulbIcon,
-  PencilIcon,
-  Trash2Icon,
+  Maximize2Icon,
+  PenLineIcon,
+  UploadCloudIcon,
+  XIcon,
 } from "lucide-react";
-import { type ChangeEvent, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Document as PdfDocument, Page as PdfPage, pdfjs } from "react-pdf";
 
-import { EsignBrand } from "@/components/layout/esign-brand";
-import { Footer } from "@/components/layout/footer";
+import { z } from "zod";
+
+import "react-pdf/dist/Page/AnnotationLayer.css";
+import "react-pdf/dist/Page/TextLayer.css";
+
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { cn } from "@/lib/utils";
-import { QUERY_KEYS } from "@/services/api-config";
-import { useDocumentUpload } from "@/services/queries/document";
+import { Skeleton } from "@/components/ui/skeleton";
+import type { Document } from "@/lib/schemas/document";
+import type { SignSpecimen } from "@/lib/schemas/sign";
+import {
+  useDocumentPreview,
+  useDocumentSign,
+  useDocumentUpload,
+} from "@/services/queries/document";
+import { useSignSpecimenList } from "@/services/queries/sign";
 
-const topNavItems = [
-  { label: "Dashboard", to: "/app" },
-  { label: "Documents", to: "/app/documents" },
-  { label: "Profile", to: "/app/profile" },
-] as const;
+// Setup PDF.js worker
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
-type UploadFeedback = {
-  type: "success" | "error";
-  message: string;
-};
+const ACCEPTED_TYPES = ["application/pdf"];
+const MAX_SIZE_MB = 25;
+const A4_WIDTH = 595;
+const A4_HEIGHT = 842;
 
-const DocumentsSetupPage = () => {
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+const DocumentsPage = () => {
+  const navigate = useNavigate();
+  const search = Route.useSearch();
+  const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
+
+  // Step 1 State
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const queryClient = useQueryClient();
-  const documentUpload = useDocumentUpload();
+  const [file, setFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [dragOver, setDragOver] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [uploadedDoc, setUploadedDoc] = useState<Document | null>(null);
 
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [uploadFeedback, setUploadFeedback] = useState<UploadFeedback | null>(
-    null
+  // Step 2 State
+  const [selectedSign, setSelectedSign] = useState<SignSpecimen | null>(null);
+  const [targetPage, setTargetPage] = useState<number>(1);
+  const [signPos, setSignPos] = useState({
+    x: 0.1,
+    y: 0.1,
+    width: 0.3,
+    height: 0.1,
+  });
+  const [isDragging, setIsDragging] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
+  const [numPages, setNumPages] = useState<number>(0);
+  const [pageDimensions, setPageDimensions] = useState<
+    Record<number, { width: number; height: number }>
+  >({});
+
+  // Container sizing
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(500);
+
+  useEffect(() => {
+    if (containerRef.current) {
+      setContainerWidth(containerRef.current.clientWidth);
+    }
+  }, []);
+
+  // Queries & Mutations
+  const documentUpload = useDocumentUpload();
+  const documentSign = useDocumentSign();
+  const signSpecimenList = useSignSpecimenList();
+  const documentPreview = useDocumentPreview(
+    currentStep > 1 && uploadedDoc ? uploadedDoc.id : ""
   );
 
-  const openFilePicker = () => {
-    fileInputRef.current?.click();
-  };
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
-  const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-
-    event.target.value = "";
-
-    if (!file) {
-      return;
+  useEffect(() => {
+    const bufData = (documentPreview.data?.buffer as any)?.data;
+    if (bufData) {
+      const bytes = new Uint8Array(bufData);
+      const blob = new Blob([bytes], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      setPdfUrl(url);
+      return () => URL.revokeObjectURL(url);
     }
+    setPdfUrl(null);
+  }, [documentPreview.data]);
 
-    const isPdf =
-      file.type === "application/pdf" ||
-      file.name.toLowerCase().endsWith(".pdf");
-
-    if (!isPdf) {
-      setSelectedFile(null);
-      setUploadFeedback({
-        type: "error",
-        message: "File harus berformat PDF.",
-      });
-      return;
+  useEffect(() => {
+    // If we land on this page with a docId search param, automatically jump to step 2
+    if (search.docId && !uploadedDoc) {
+      setUploadedDoc({ id: search.docId } as Document);
+      setCurrentStep(2);
     }
+  }, [search.docId, uploadedDoc]);
 
-    if (file.size > 25 * 1024 * 1024) {
-      setSelectedFile(null);
-      setUploadFeedback({
-        type: "error",
-        message: "Ukuran file maksimal 25 MB.",
-      });
-      return;
-    }
+  // ---------------------------------------------------------------------------
+  // Step 1 Handlers
+  // ---------------------------------------------------------------------------
+  const handleFile = useCallback(
+    (incoming: File) => {
+      setError(null);
+      setUploadedDoc(null);
+      documentUpload.reset();
 
-    setSelectedFile(file);
-    setUploadFeedback(null);
+      if (!ACCEPTED_TYPES.includes(incoming.type)) {
+        setError("Only PDF files are accepted.");
+        return;
+      }
 
+      if (incoming.size > MAX_SIZE_MB * 1024 * 1024) {
+        setError(`File must be smaller than ${MAX_SIZE_MB} MB.`);
+        return;
+      }
+
+      setFile(incoming);
+      setPreviewUrl(URL.createObjectURL(incoming));
+    },
+    [documentUpload]
+  );
+
+  const handleInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const picked = e.target.files?.[0];
+      if (picked) handleFile(picked);
+      e.target.value = "";
+    },
+    [handleFile]
+  );
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setDragOver(false);
+      const dropped = e.dataTransfer.files[0];
+      if (dropped) handleFile(dropped);
+    },
+    [handleFile]
+  );
+
+  const handleRemove = useCallback(() => {
+    setFile(null);
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+    setError(null);
+    setUploadedDoc(null);
+    documentUpload.reset();
+  }, [previewUrl, documentUpload]);
+
+  const handleUpload = useCallback(async () => {
+    if (!file) return;
     const formData = new FormData();
-
-    /*
-      Nama field "files" digunakan karena backend membaca
-      file upload dari collection files.
-    */
     formData.append("files", file);
+    try {
+      const res = await documentUpload.mutateAsync(formData);
+      setUploadedDoc(res);
+      setCurrentStep(2);
+    } catch (err) {
+      console.error("Upload failed", err);
+    }
+  }, [file, documentUpload]);
+
+  // ---------------------------------------------------------------------------
+  // Step 2 Interactions (Drag & Drop & Resize)
+  // ---------------------------------------------------------------------------
+  const handlePointerDownDrag = useCallback(
+    (e: React.PointerEvent) => {
+      if (!selectedSign) return;
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragging(true);
+      e.currentTarget.setPointerCapture(e.pointerId);
+    },
+    [selectedSign]
+  );
+
+  const handlePointerDownResize = useCallback((e: React.PointerEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsResizing(true);
+    e.currentTarget.setPointerCapture(e.pointerId);
+  }, []);
+
+  const handlePointerMovePage = useCallback(
+    (e: React.PointerEvent, pageNum: number) => {
+      if (!containerRef.current) return;
+      if (!isDragging && !isResizing) return;
+
+      const rect = containerRef.current.getBoundingClientRect();
+
+      if (isDragging) {
+        // We only allow dragging if we are on the target page
+        if (targetPage !== pageNum) {
+          setTargetPage(pageNum);
+        }
+
+        let newX = (e.clientX - rect.left) / rect.width;
+        let newY = (e.clientY - rect.top) / rect.height;
+
+        newX = Math.max(
+          0,
+          Math.min(newX - signPos.width / 2, 1 - signPos.width)
+        );
+        newY = Math.max(
+          0,
+          Math.min(newY - signPos.height / 2, 1 - signPos.height)
+        );
+
+        setSignPos((prev) => ({ ...prev, x: newX, y: newY }));
+      } else if (isResizing && targetPage === pageNum) {
+        // Calculate new width/height based on bottom-right corner
+        let newW = (e.clientX - rect.left) / rect.width - signPos.x;
+        let newH = (e.clientY - rect.top) / rect.height - signPos.y;
+
+        // Min sizes
+        newW = Math.max(0.05, Math.min(newW, 1 - signPos.x));
+        newH = Math.max(0.05, Math.min(newH, 1 - signPos.y));
+
+        setSignPos((prev) => ({ ...prev, width: newW, height: newH }));
+      }
+    },
+    [isDragging, isResizing, signPos, targetPage]
+  );
+
+  const handlePointerUp = useCallback((e: React.PointerEvent) => {
+    setIsDragging(false);
+    setIsResizing(false);
+    e.currentTarget.releasePointerCapture(e.pointerId);
+  }, []);
+
+  // ---------------------------------------------------------------------------
+  // Step 3 Handlers
+  // ---------------------------------------------------------------------------
+  const handleSaveAndSign = useCallback(async () => {
+    if (!uploadedDoc || !selectedSign) return;
+
+    const currentDims = pageDimensions[targetPage] || {
+      width: A4_WIDTH,
+      height: A4_HEIGHT,
+    };
 
     try {
-      await documentUpload.mutateAsync(formData);
-
-      await queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.DOCUMENT.LIST,
+      await documentSign.mutateAsync({
+        document_id: uploadedDoc.id,
+        sign_id: selectedSign.id,
+        metadata: {
+          koor_x: Math.round(signPos.x * currentDims.width),
+          koor_y: Math.round(
+            (1 - signPos.y - signPos.height) * currentDims.height
+          ),
+          width: Math.round(signPos.width * currentDims.width),
+          height: Math.round(signPos.height * currentDims.height),
+          page: targetPage,
+        },
       });
-
-      setUploadFeedback({
-        type: "success",
-        message: "Dokumen berhasil diunggah.",
-      });
-    } catch (error) {
-      setUploadFeedback({
-        type: "error",
-        message:
-          error instanceof Error ? error.message : "Dokumen gagal diunggah.",
-      });
+      navigate({ to: "/app" });
+    } catch (err) {
+      console.error("Sign failed", err);
     }
-  };
+  }, [
+    uploadedDoc,
+    selectedSign,
+    signPos,
+    targetPage,
+    documentSign,
+    navigate,
+    pageDimensions,
+  ]);
 
   return (
-    <div className="flex min-h-screen flex-col bg-background text-[#2d1b25]">
-      <header className="border-[#e9d7dd] border-b bg-[#f9f4f6]/95 backdrop-blur">
-        <div className="mx-auto flex h-20 w-full max-w-7xl items-center justify-between gap-4 px-4 lg:px-8">
-          <Link to="/app" className="shrink-0">
-            <EsignBrand className="[&_p]:text-[1.2rem]" />
-          </Link>
-
-          <nav className="hidden items-center gap-6 md:flex">
-            {topNavItems.map((item) => (
-              <Link
-                key={item.label}
-                to={item.to}
-                className={cn(
-                  "border-transparent border-b-2 px-0.5 pb-1 font-semibold text-[#68545f] text-[0.92rem] transition-colors",
-                  item.to === "/app/documents" && "border-primary text-primary"
-                )}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-
-          <div className="flex items-center gap-3">
-            <Link
-              to="/"
-              className="hidden font-semibold text-[#806b75] text-[0.84rem] sm:inline-flex"
-            >
-              Sign Out
-            </Link>
-
-            <Button
-              type="button"
-              className="h-10 rounded-lg px-6"
-              onClick={openFilePicker}
-              disabled={documentUpload.isPending}
-            >
-              {documentUpload.isPending ? "Uploading..." : "Upload"}
-            </Button>
-          </div>
+    <div className="space-y-8">
+      {/* Stepper UI */}
+      <section>
+        <p className="font-black text-[0.68rem] text-primary uppercase tracking-[0.2em]">
+          Step 0{currentStep} of 03
+        </p>
+        <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-[#eed9e0]">
+          <div
+            className="h-full rounded-full bg-primary transition-all duration-300"
+            style={{ width: `${(currentStep / 3) * 100}%` }}
+          />
         </div>
-      </header>
+        <div className="mt-2 flex items-center justify-between font-semibold text-[#84717a] text-[0.74rem]">
+          <span className={currentStep >= 1 ? "text-primary" : ""}>Upload</span>
+          <span className={currentStep >= 2 ? "text-primary" : ""}>
+            Sign Placement
+          </span>
+          <span className={currentStep >= 3 ? "text-primary" : ""}>
+            Review & Save
+          </span>
+        </div>
+      </section>
 
-      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-9 lg:px-8 lg:py-10">
-        <section>
-          <p className="font-black text-[0.68rem] text-primary uppercase tracking-[0.2em]">
-            Step 01 of 03
-          </p>
+      {/* STEP 1: UPLOAD */}
+      {currentStep === 1 && (
+        <div className="fade-in slide-in-from-bottom-4 animate-in">
+          <section className="mb-6">
+            <h1 className="font-black text-5xl text-[#2b1823] tracking-[-0.03em]">
+              Upload Document
+            </h1>
+            <p className="mt-2 text-[#705c67]">
+              Choose a PDF to upload, preview, then proceed to sign.
+            </p>
+          </section>
 
-          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-[#eed9e0]">
-            <div className="h-full w-1/3 rounded-full bg-primary" />
-          </div>
+          <section className="grid gap-6 xl:grid-cols-[1fr_1fr]">
+            {/* Left: file picker */}
+            <div className="space-y-5">
+              <div>
+                <p className="mb-3 font-black text-[#2b1823] text-[1.4rem] tracking-[-0.02em]">
+                  Select File
+                </p>
 
-          <p className="mt-2 text-right font-semibold text-[#84717a] text-[0.74rem]">
-            Upload & Setup
-          </p>
-        </section>
-
-        <section className="mt-8 grid gap-6 xl:grid-cols-[1.75fr_1fr]">
-          <div className="space-y-8">
-            <div>
-              <h1 className="font-black text-5xl text-[#2b1823] tracking-[-0.03em]">
-                Select Document
-              </h1>
-
-              <p className="mt-2 text-[#715d67]">
-                Choose the PDF file you wish to secure and sign.
-              </p>
-
-              <Card className="mt-5 rounded-2xl border border-[#efc4d4] border-dashed bg-[#fcf3f6] py-0 ring-0">
-                <CardContent className="grid min-h-62.5 place-content-center px-5 py-7 text-center">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="application/pdf,.pdf"
-                    className="hidden"
-                    onChange={handleFileChange}
-                  />
-
-                  <span className="mx-auto grid size-14 place-content-center rounded-full bg-[#f8dbe6] text-primary">
-                    <FileUpIcon className="size-6" />
-                  </span>
-
-                  <p className="mt-4 font-black text-[#2e1d27] text-[1.35rem] tracking-[-0.02em]">
-                    Select your PDF document
-                  </p>
-
-                  <p className="mt-1 text-[#7d6872] text-[0.84rem]">
-                    Maximum file size: 25MB
-                  </p>
-
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="mx-auto mt-5 h-10 rounded-lg border-[#ecc8d6] bg-white px-6 text-primary"
-                    onClick={openFilePicker}
-                    disabled={documentUpload.isPending}
-                  >
-                    {documentUpload.isPending ? "Uploading..." : "Browse PDF"}
-                  </Button>
-
-                  {selectedFile && (
-                    <p className="mt-4 text-[#715d67] text-sm">
-                      File dipilih: {selectedFile.name}
-                    </p>
-                  )}
-
-                  {uploadFeedback && (
-                    <p
-                      className={cn(
-                        "mt-4 rounded-lg px-4 py-2 text-sm",
-                        uploadFeedback.type === "success"
-                          ? "bg-green-50 text-green-700"
-                          : "bg-red-50 text-red-700"
-                      )}
-                    >
-                      {uploadFeedback.message}
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-
-            <div>
-              <div className="mb-4 flex items-center justify-between gap-4">
-                <div>
-                  <h2 className="font-black text-[#2b1823] text-[2.1rem] tracking-[-0.03em]">
-                    Add Recipients
-                  </h2>
-
-                  <p className="text-[#715d67]">
-                    Specify who needs to view or sign this document.
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  className="flex items-center gap-1 font-semibold text-[0.82rem] text-primary"
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf"
+                  className="hidden"
+                  onChange={handleInputChange}
+                />
+                <Card
+                  className={`rounded-2xl border-2 border-dashed bg-[#fcf3f6] py-0 ring-0 transition-colors ${
+                    dragOver
+                      ? "border-primary bg-primary/5"
+                      : "border-[#efc4d4]"
+                  }`}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setDragOver(true);
+                  }}
+                  onDragLeave={() => setDragOver(false)}
+                  onDrop={handleDrop}
                 >
-                  <CirclePlusIcon className="size-4" />
-                  Add Row
-                </button>
+                  <CardContent className="grid min-h-64 place-content-center px-5 py-8 text-center">
+                    <span className="mx-auto grid size-14 place-content-center rounded-full bg-[#f8dbe6] text-primary">
+                      <FileUpIcon className="size-6" />
+                    </span>
+                    <p className="mt-4 font-black text-[#2e1d27] text-[1.2rem] tracking-[-0.02em]">
+                      Drop your PDF here
+                    </p>
+                    <p className="mt-1 text-[#7d6872] text-[0.84rem]">
+                      Maximum file size: {MAX_SIZE_MB} MB
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="mx-auto mt-5 h-10 rounded-lg border-[#ecc8d6] bg-white px-6 text-primary"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      Browse Files
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                {error && (
+                  <p className="mt-2 text-[0.82rem] text-red-500">{error}</p>
+                )}
               </div>
 
-              <Card className="rounded-2xl border border-[#ebdbe0] bg-white py-0 ring-0">
-                <CardContent className="grid gap-3 px-4 py-4 sm:grid-cols-[auto_1fr_1fr_auto] sm:items-end">
-                  <span className="grid size-8 place-content-center rounded-full bg-[#f7d8e3] font-bold text-[0.8rem] text-primary">
-                    1
-                  </span>
-
-                  <div>
-                    <p className="mb-1 font-semibold text-[#9c8790] text-[0.62rem] uppercase tracking-[0.14em]">
-                      Full Name
-                    </p>
-
-                    <Input
-                      className="h-10 rounded-lg border-[#ebd7de] bg-[#fcf7f9]"
-                      placeholder="e.g. Alexander Vance"
-                    />
+              {/* Selected file info */}
+              {file && (
+                <div className="flex items-center justify-between gap-3 rounded-xl border border-[#ebdbe0] bg-white px-4 py-3">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span className="grid size-9 shrink-0 place-content-center rounded-lg bg-[#f8eef2] text-primary">
+                      <FileUpIcon className="size-4" />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate font-semibold text-[#2b1823] text-[0.9rem]">
+                        {file.name}
+                      </p>
+                      <p className="text-[#9d8891] text-[0.74rem]">
+                        {formatBytes(file.size)}
+                      </p>
+                    </div>
                   </div>
-
-                  <div>
-                    <p className="mb-1 font-semibold text-[#9c8790] text-[0.62rem] uppercase tracking-[0.14em]">
-                      Email Address
-                    </p>
-
-                    <Input
-                      className="h-10 rounded-lg border-[#ebd7de] bg-[#fcf7f9]"
-                      placeholder="alex@vault.co"
-                    />
-                  </div>
-
-                  <div className="mb-2 flex items-center gap-2 text-[#8c7780]">
-                    <PencilIcon className="size-4" />
-                    <Trash2Icon className="size-4" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <button
-                type="button"
-                className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#eec8d6] border-dashed bg-[#fcf2f6] font-semibold text-[#715d67] text-[0.95rem]"
-              >
-                <CirclePlusIcon className="size-4" />
-                Add another recipient
-              </button>
-            </div>
-
-            <Card className="rounded-2xl border border-[#ecd8df] bg-[#faedf2] py-0 ring-0">
-              <CardContent className="flex flex-wrap items-center justify-between gap-4 px-4 py-4">
-                <div className="flex items-center gap-3">
-                  <span className="grid size-8 place-content-center rounded-lg bg-white text-primary">
-                    <PencilIcon className="size-4" />
-                  </span>
-
-                  <div>
-                    <p className="font-bold text-[#2f2028] text-[0.95rem]">
-                      Set Signing Order
-                    </p>
-
-                    <p className="text-[#836f78] text-[0.8rem]">
-                      Document will be sent to recipients sequentially.
-                    </p>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={handleRemove}
+                    className="shrink-0 rounded-lg p-1.5 text-[#9d8891] transition-colors hover:bg-[#f8eef2] hover:text-primary"
+                  >
+                    <XIcon className="size-4" />
+                  </button>
                 </div>
+              )}
 
-                <Switch defaultChecked />
-              </CardContent>
-            </Card>
-
-            <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
-              <Link
-                to="/app"
-                className="inline-flex items-center gap-2 font-semibold text-[#5a4a52] transition-colors hover:text-primary"
-              >
-                <ArrowLeftIcon className="size-4" />
-                Back to Dashboard
-              </Link>
-
-              <Link to="/app/sign">
-                <Button className="h-11 rounded-lg px-8">
-                  Prepare Signature Fields
+              {/* Action buttons */}
+              <div className="flex flex-wrap gap-3">
+                <Button
+                  className="h-10 gap-2 rounded-lg px-6"
+                  disabled={!file || documentUpload.isPending}
+                  onClick={handleUpload}
+                >
+                  <UploadCloudIcon className="size-4" />
+                  {documentUpload.isPending
+                    ? "Uploading…"
+                    : "Upload & Continue"}
                 </Button>
-              </Link>
+              </div>
+
+              {documentUpload.isError && (
+                <p className="text-[0.84rem] text-red-500">
+                  Upload failed. Please try again.
+                </p>
+              )}
             </div>
-          </div>
 
-          <aside className="space-y-4 xl:pt-16">
-            <Card className="rounded-2xl border border-[#ebdbe0] bg-[#faeff3] py-0 ring-0">
-              <CardHeader className="space-y-2 px-4 pt-4 pb-1">
-                <CardTitle className="flex items-center gap-2 font-black text-[#2b1823] text-[1.25rem] tracking-[-0.02em]">
-                  <LightbulbIcon className="size-4 text-primary" />
-                  Pro Tips
-                </CardTitle>
-              </CardHeader>
+            {/* Right: preview */}
+            <div>
+              <p className="mb-3 font-black text-[#2b1823] text-[1.4rem] tracking-[-0.02em]">
+                Preview
+              </p>
 
-              <CardContent className="space-y-4 px-4 pb-4 text-[#705c67] text-[0.84rem] leading-relaxed">
+              {previewUrl ? (
+                <div className="overflow-hidden rounded-2xl border border-[#ebdbe0] bg-white">
+                  <div className="flex items-center justify-between gap-2 border-[#f2e6ea] border-b px-4 py-3">
+                    <p className="truncate font-semibold text-[#2b1823] text-[0.88rem]">
+                      {file?.name}
+                    </p>
+                    <Badge className="shrink-0 bg-[#efe4e8] text-[#9f7784] text-[0.62rem] uppercase tracking-[0.1em]">
+                      PDF
+                    </Badge>
+                  </div>
+                  <iframe
+                    src={previewUrl}
+                    title="PDF preview"
+                    className="h-[520px] w-full"
+                  />
+                </div>
+              ) : (
+                <Card className="rounded-2xl border border-[#ebdbe0] bg-[#faf5f7] py-0 ring-0">
+                  <CardContent className="grid h-[520px] place-content-center px-5 text-center">
+                    <span className="mx-auto grid size-14 place-content-center rounded-full bg-[#f0e4e8] text-[#c9a8b5]">
+                      <FileUpIcon className="size-6" />
+                    </span>
+                    <p className="mt-4 font-semibold text-[#9d8891] text-[0.9rem]">
+                      No file selected
+                    </p>
+                    <p className="mt-1 text-[#b5a0a9] text-[0.78rem]">
+                      Your PDF preview will appear here.
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </section>
+        </div>
+      )}
+
+      {/* STEP 2: SIGN PLACEMENT */}
+      {currentStep === 2 && uploadedDoc && (
+        <div className="fade-in slide-in-from-bottom-4 animate-in">
+          <section className="mb-6 flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h1 className="font-black text-5xl text-[#2b1823] tracking-[-0.03em]">
+                Sign Document
+              </h1>
+              <p className="mt-2 text-[#705c67]">
+                Select a signature and drag it onto the desired page.
+              </p>
+            </div>
+            <Button variant="outline" onClick={() => setCurrentStep(1)}>
+              Back
+            </Button>
+          </section>
+
+          <section className="grid gap-6 xl:grid-cols-[300px_1fr]">
+            {/* Left: Specimen Selection */}
+            <div className="space-y-6">
+              <div className="space-y-3">
+                <p className="font-black text-[#2b1823] text-[1.2rem] tracking-[-0.02em]">
+                  1. Choose Signature
+                </p>
+                {signSpecimenList.isLoading ? (
+                  <div className="space-y-3">
+                    <Skeleton className="h-20 w-full rounded-xl" />
+                    <Skeleton className="h-20 w-full rounded-xl" />
+                  </div>
+                ) : signSpecimenList.data?.data?.rows_data?.docs?.length ? (
+                  <div className="grid gap-3">
+                    {signSpecimenList.data.data.rows_data.docs.map((sign) => (
+                      <button
+                        key={sign.id}
+                        type="button"
+                        onClick={() => setSelectedSign(sign)}
+                        className={`overflow-hidden rounded-xl border-2 transition-colors ${
+                          selectedSign?.id === sign.id
+                            ? "border-primary bg-primary/5"
+                            : "border-[#ebdbe0] bg-white hover:border-[#dfc9d2]"
+                        }`}
+                      >
+                        <img
+                          src={sign.preview_url}
+                          alt="Specimen"
+                          className="h-20 w-full object-contain p-2"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-[#ebdbe0] bg-[#faf5f7] p-4 text-center">
+                    <p className="text-[#9d8891] text-[0.84rem]">
+                      No signatures found. Add one in your Profile.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Target Page Selector */}
+              <div className="space-y-3">
+                <p className="font-black text-[#2b1823] text-[1.2rem] tracking-[-0.02em]">
+                  2. Target Page
+                </p>
+                <div className="flex items-center gap-3">
+                  <Input
+                    type="number"
+                    min={1}
+                    max={numPages || 1}
+                    value={targetPage}
+                    onChange={(e) => {
+                      let val = Number.parseInt(e.target.value, 10);
+                      if (Number.isNaN(val)) val = 1;
+                      if (val < 1) val = 1;
+                      if (val > numPages) val = numPages;
+                      setTargetPage(val);
+                    }}
+                    className="w-20"
+                  />
+                  <span className="text-[#705c67] text-sm">
+                    of {numPages || 1}
+                  </span>
+                </div>
+              </div>
+
+              <Button
+                className="w-full gap-2"
+                disabled={!selectedSign || !pdfUrl}
+                onClick={() => setCurrentStep(3)}
+              >
+                Continue to Review
+              </Button>
+            </div>
+
+            {/* Right: PDF Document Canvas */}
+            <div className="flex h-[800px] flex-col items-center overflow-y-auto rounded-2xl border border-[#ebdbe0] bg-[#eef0f2] p-6 shadow-inner">
+              {documentPreview.isLoading && (
+                <p className="text-[#a39098]">Loading document...</p>
+              )}
+              {pdfUrl && (
+                <PdfDocument
+                  file={pdfUrl}
+                  onLoadSuccess={({ numPages }) => setNumPages(numPages)}
+                  onLoadError={console.error}
+                  className="space-y-8"
+                >
+                  {Array.from({ length: numPages }, (_, index) => (
+                    <div
+                      key={`page_${index + 1}`}
+                      className="relative bg-white shadow-lg"
+                      style={{
+                        width: "100%",
+                        maxWidth: "600px",
+                        margin: "0 auto",
+                      }}
+                      ref={targetPage === index + 1 ? containerRef : null}
+                      onPointerDown={() => setTargetPage(index + 1)}
+                      onPointerMove={(e) => handlePointerMovePage(e, index + 1)}
+                      onPointerUp={handlePointerUp}
+                      onPointerLeave={handlePointerUp}
+                    >
+                      <PdfPage
+                        pageNumber={index + 1}
+                        width={containerWidth}
+                        renderTextLayer={false}
+                        renderAnnotationLayer={false}
+                        onLoadSuccess={(page) => {
+                          setPageDimensions((prev) => ({
+                            ...prev,
+                            [index + 1]: {
+                              width: page.originalWidth,
+                              height: page.originalHeight,
+                            },
+                          }));
+                        }}
+                      />
+
+                      {/* Render overlay only if a signature is selected AND we're interacting with or viewing this page */}
+                      {selectedSign && targetPage === index + 1 && (
+                        <div
+                          className="absolute border-2 border-primary bg-primary/10 shadow-sm"
+                          style={{
+                            left: `${signPos.x * 100}%`,
+                            top: `${signPos.y * 100}%`,
+                            width: `${signPos.width * 100}%`,
+                            height: `${signPos.height * 100}%`,
+                            cursor: isDragging ? "grabbing" : "grab",
+                          }}
+                          onPointerDown={handlePointerDownDrag}
+                        >
+                          <img
+                            src={selectedSign.preview_url}
+                            alt="Selected signature"
+                            className="pointer-events-none h-full w-full object-fill"
+                          />
+                          {(isDragging || isResizing) && (
+                            <div className="absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-[#2b1823] px-2 py-0.5 text-[0.65rem] text-white">
+                              Page {targetPage} |{" "}
+                              {Math.round(
+                                signPos.width *
+                                  (pageDimensions[targetPage]?.width ||
+                                    A4_WIDTH)
+                              )}
+                              x
+                              {Math.round(
+                                signPos.height *
+                                  (pageDimensions[targetPage]?.height ||
+                                    A4_HEIGHT)
+                              )}
+                            </div>
+                          )}
+
+                          {/* Resize Handle */}
+                          <div
+                            className="absolute -right-3 -bottom-3 flex size-6 cursor-nwse-resize items-center justify-center rounded-full border border-white bg-primary text-white shadow-sm"
+                            onPointerDown={handlePointerDownResize}
+                          >
+                            <Maximize2Icon className="size-3 rotate-90" />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </PdfDocument>
+              )}
+            </div>
+          </section>
+        </div>
+      )}
+
+      {/* STEP 3: REVIEW & SAVE */}
+      {currentStep === 3 && uploadedDoc && selectedSign && (
+        <div className="fade-in slide-in-from-bottom-4 animate-in">
+          <section className="mb-6 flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h1 className="font-black text-5xl text-[#2b1823] tracking-[-0.03em]">
+                Review & Save
+              </h1>
+              <p className="mt-2 text-[#705c67]">
+                Visual confirmation of your signature placement.
+              </p>
+            </div>
+            <Button variant="outline" onClick={() => setCurrentStep(2)}>
+              Back
+            </Button>
+          </section>
+
+          <Card className="mx-auto max-w-4xl rounded-2xl border border-[#ebdbe0] bg-white py-0 ring-0">
+            <CardContent className="space-y-6 px-6 py-6">
+              <div className="flex items-center gap-4 border-[#f0e6e9] border-b pb-5">
+                <CheckCircle2Icon className="size-8 text-green-500" />
                 <div>
-                  <p className="font-bold text-[#2f2028]">Sequential Signing</p>
-                  <p>
-                    Turn on &quot;Signing Order&quot; if specific stakeholders
-                    need to approve before others.
+                  <p className="font-black text-[#2b1823] text-[1.2rem]">
+                    Ready to Sign
+                  </p>
+                  <p className="text-[#705c67] text-[0.84rem]">
+                    Your document will be securely processed and saved.
                   </p>
                 </div>
+              </div>
 
-                <div>
-                  <p className="font-bold text-[#2f2028]">Accessibility</p>
-                  <p>
-                    Ensure your PDF has a clear title and metadata for
-                    screen-reader users.
-                  </p>
+              <div className="grid items-start gap-6 md:grid-cols-[2fr_1fr]">
+                {/* Visual Preview */}
+                <div className="flex justify-center rounded-xl border border-[#ebdbe0] bg-[#eef0f2] p-4">
+                  {pdfUrl && (
+                    <div
+                      className="pointer-events-none relative shadow-md"
+                      style={{ maxWidth: "300px" }}
+                    >
+                      <PdfDocument file={pdfUrl} onLoadError={console.error}>
+                        <PdfPage
+                          pageNumber={targetPage}
+                          width={300}
+                          renderTextLayer={false}
+                          renderAnnotationLayer={false}
+                        />
+                      </PdfDocument>
+                      <div
+                        className="absolute"
+                        style={{
+                          left: `${signPos.x * 100}%`,
+                          top: `${signPos.y * 100}%`,
+                          width: `${signPos.width * 100}%`,
+                          height: `${signPos.height * 100}%`,
+                        }}
+                      >
+                        <img
+                          src={selectedSign.preview_url}
+                          alt="Preview signature"
+                          className="h-full w-full object-fill"
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </CardContent>
-            </Card>
 
-            <Card className="rounded-2xl border border-[#ebdbe0] bg-[linear-gradient(140deg,#a6a8af_0%,#c2c5cb_35%,#9ca0a8_100%)] py-0 ring-0">
-              <CardContent className="space-y-4 px-4 py-4 text-white">
-                <div className="grid h-28 place-content-center rounded-lg bg-white/20">
-                  <FileUpIcon className="size-12" />
+                <div className="space-y-4">
+                  <div className="grid grid-cols-[120px_1fr] items-center gap-4">
+                    <p className="font-semibold text-[#a39098] text-[0.75rem] uppercase tracking-wider">
+                      Document
+                    </p>
+                    <p className="truncate font-medium text-[#2b1823]">
+                      {file?.name ?? uploadedDoc.id}
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-[120px_1fr] items-center gap-4">
+                    <p className="font-semibold text-[#a39098] text-[0.75rem] uppercase tracking-wider">
+                      Target Page
+                    </p>
+                    <Badge className="w-fit bg-[#f0e6e9] text-[#2b1823] hover:bg-[#e6d0d9]">
+                      Page {targetPage} of {numPages}
+                    </Badge>
+                  </div>
+
+                  <div className="grid grid-cols-[120px_1fr] items-center gap-4">
+                    <p className="font-semibold text-[#a39098] text-[0.75rem] uppercase tracking-wider">
+                      Geometry
+                    </p>
+                    <p className="font-mono text-[#5f4e56] text-[0.84rem]">
+                      x:{" "}
+                      {Math.round(
+                        signPos.x *
+                          (pageDimensions[targetPage]?.width || A4_WIDTH)
+                      )}
+                      , y:{" "}
+                      {Math.round(
+                        signPos.y *
+                          (pageDimensions[targetPage]?.height || A4_HEIGHT)
+                      )}
+                      <br />
+                      w:{" "}
+                      {Math.round(
+                        signPos.width *
+                          (pageDimensions[targetPage]?.width || A4_WIDTH)
+                      )}
+                      , h:{" "}
+                      {Math.round(
+                        signPos.height *
+                          (pageDimensions[targetPage]?.height || A4_HEIGHT)
+                      )}
+                    </p>
+                  </div>
                 </div>
+              </div>
 
-                <p className="font-black text-[#ffd3e3] text-[0.7rem] uppercase tracking-[0.15em]">
-                  Security Vault
+              <div className="flex gap-3 pt-4">
+                <Button
+                  className="w-full gap-2"
+                  disabled={documentSign.isPending}
+                  onClick={handleSaveAndSign}
+                >
+                  <PenLineIcon className="size-4" />
+                  {documentSign.isPending ? "Processing..." : "Save & Sign"}
+                </Button>
+              </div>
+
+              {documentSign.isError && (
+                <p className="text-center text-[0.84rem] text-red-500">
+                  Failed to sign document. Please try again.
                 </p>
-
-                <h3 className="font-black text-[1.55rem] tracking-[-0.03em]">
-                  256-bit AES Encryption
-                </h3>
-
-                <p className="text-[#f5ddeb] text-[0.83rem]">
-                  Every document uploaded to ESIGN is fragmented and encrypted
-                  at rest.
-                </p>
-              </CardContent>
-            </Card>
-          </aside>
-        </section>
-      </main>
-
-      <Footer />
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 };
 
 export const Route = createFileRoute("/app/documents")({
-  component: DocumentsSetupPage,
+  validateSearch: z.object({
+    docId: z.string().optional(),
+  }),
+  component: DocumentsPage,
 });

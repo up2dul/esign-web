@@ -26,6 +26,24 @@ export const DocumentSchema = z.object({
   file_name: z.string().nullable().optional(),
   created_at: z.iso.datetime(),
   updated_at: z.iso.datetime().optional(),
+  deleted_at: z.iso.datetime().nullable().optional(),
+});
+
+export const DocumentResponseSchema = z.object({
+  success: z.boolean(),
+  message: z.string(),
+  data: DocumentSchema,
+});
+
+export const DocumentListItemSchema = z.object({
+  id: z.uuid(),
+  original_file_id: z.uuid(),
+  signed_file_id: z.uuid().nullable(),
+  user_id: z.uuid(),
+  cover_url: z.string().nullable(),
+  file_name: z.string().nullable().optional(),
+  status: z.enum(["DRAFT", "SIGNED"]),
+  created_at: z.iso.datetime(),
 });
 
 export const DocumentListResponseSchema = z.object({
@@ -38,7 +56,7 @@ export const DocumentListResponseSchema = z.object({
     previous_page: z.number().nullable(),
     next_page: z.number().nullable(),
     rows_data: z.object({
-      docs: z.array(DocumentSchema),
+      docs: z.array(DocumentListItemSchema),
     }),
   }),
 });
@@ -60,8 +78,10 @@ export const DocumentValidityResponseSchema = z.object({
 
 export type SignDocsRequest = z.infer<typeof SignDocsRequestSchema>;
 export type Document = z.infer<typeof DocumentSchema>;
+export type DocumentListItem = z.infer<typeof DocumentListItemSchema>;
 export type DocumentMetadata = z.infer<typeof DocumentMetadataSchema>;
 export type DocumentListResponse = z.infer<typeof DocumentListResponseSchema>;
+export type DocumentResponse = z.infer<typeof DocumentResponseSchema>;
 export type DocumentPreviewResponse = z.infer<
   typeof DocumentPreviewResponseSchema
 >;

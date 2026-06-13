@@ -23,6 +23,7 @@ import { Route as AppProfileRouteImport } from './routes/app/profile'
 import { Route as AppPendingRouteImport } from './routes/app/pending'
 import { Route as AppDocumentsRouteImport } from './routes/app/documents'
 import { Route as AppArchivedRouteImport } from './routes/app/archived'
+import { Route as AppDocumentsDocIdDownloadRouteImport } from './routes/app/documents_.$docId.download'
 
 const MobileVerifyRoute = MobileVerifyRouteImport.update({
   id: '/mobile-verify',
@@ -94,6 +95,12 @@ const AppArchivedRoute = AppArchivedRouteImport.update({
   path: '/archived',
   getParentRoute: () => AppRoute,
 } as any)
+const AppDocumentsDocIdDownloadRoute =
+  AppDocumentsDocIdDownloadRouteImport.update({
+    id: '/documents_/$docId/download',
+    path: '/documents/$docId/download',
+    getParentRoute: () => AppRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -110,6 +117,7 @@ export interface FileRoutesByFullPath {
   '/auth/register': typeof AuthRegisterRoute
   '/auth/verify-otp': typeof AuthVerifyOtpRoute
   '/app/': typeof AppIndexRoute
+  '/app/documents/$docId/download': typeof AppDocumentsDocIdDownloadRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -125,6 +133,7 @@ export interface FileRoutesByTo {
   '/auth/register': typeof AuthRegisterRoute
   '/auth/verify-otp': typeof AuthVerifyOtpRoute
   '/app': typeof AppIndexRoute
+  '/app/documents/$docId/download': typeof AppDocumentsDocIdDownloadRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -142,6 +151,7 @@ export interface FileRoutesById {
   '/auth/register': typeof AuthRegisterRoute
   '/auth/verify-otp': typeof AuthVerifyOtpRoute
   '/app/': typeof AppIndexRoute
+  '/app/documents_/$docId/download': typeof AppDocumentsDocIdDownloadRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -160,6 +170,7 @@ export interface FileRouteTypes {
     | '/auth/register'
     | '/auth/verify-otp'
     | '/app/'
+    | '/app/documents/$docId/download'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -175,6 +186,7 @@ export interface FileRouteTypes {
     | '/auth/register'
     | '/auth/verify-otp'
     | '/app'
+    | '/app/documents/$docId/download'
   id:
     | '__root__'
     | '/'
@@ -191,6 +203,7 @@ export interface FileRouteTypes {
     | '/auth/register'
     | '/auth/verify-otp'
     | '/app/'
+    | '/app/documents_/$docId/download'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -300,6 +313,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppArchivedRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/documents_/$docId/download': {
+      id: '/app/documents_/$docId/download'
+      path: '/documents/$docId/download'
+      fullPath: '/app/documents/$docId/download'
+      preLoaderRoute: typeof AppDocumentsDocIdDownloadRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
@@ -310,6 +330,7 @@ interface AppRouteChildren {
   AppProfileRoute: typeof AppProfileRoute
   AppSignRoute: typeof AppSignRoute
   AppIndexRoute: typeof AppIndexRoute
+  AppDocumentsDocIdDownloadRoute: typeof AppDocumentsDocIdDownloadRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -319,6 +340,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppProfileRoute: AppProfileRoute,
   AppSignRoute: AppSignRoute,
   AppIndexRoute: AppIndexRoute,
+  AppDocumentsDocIdDownloadRoute: AppDocumentsDocIdDownloadRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)

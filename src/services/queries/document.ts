@@ -9,7 +9,7 @@ import type {
 import {
   DocumentListResponseSchema,
   DocumentPreviewResponseSchema,
-  DocumentSchema,
+  DocumentResponseSchema,
   DocumentValidityResponseSchema,
   SignDocsRequestSchema,
 } from "@/lib/schemas/document";
@@ -29,11 +29,11 @@ export const useDocumentList = () => {
   return documentList;
 };
 
-export const useDocumentPreview = (id: string) => {
+export const useDocumentPreview = (id: string, type?: string) => {
   const documentPreview = useQuery<DocumentPreviewResponse>({
-    queryKey: QUERY_KEYS.DOCUMENT.PREVIEW(id),
+    queryKey: QUERY_KEYS.DOCUMENT.PREVIEW(id, type),
     queryFn: async () => {
-      const res = await api.get(API_ROUTES.DOCUMENT.PREVIEW(id)).json();
+      const res = await api.get(API_ROUTES.DOCUMENT.PREVIEW(id, type)).json();
 
       return DocumentPreviewResponseSchema.parse(res);
     },
@@ -61,16 +61,12 @@ export const useDocumentUpload = () => {
   const documentUpload = useMutation<Document, Error, FormData>({
     mutationFn: async (formData) => {
       const res = await api
-        .post(API_ROUTES.DOCUMENT.UPLOAD, {
-          body: formData,
-        })
-        .json<{
-          success: boolean;
-          message: string;
-          data: unknown;
-        }>();
+        .post(API_ROUTES.DOCUMENT.UPLOAD, { body: formData })
+        .json();
 
-      return DocumentSchema.parse(res.data);
+      const parsed = DocumentResponseSchema.parse(res);
+
+      return parsed.data;
     },
   });
 
@@ -83,16 +79,12 @@ export const useDocumentSign = () => {
       const validated = SignDocsRequestSchema.parse(data);
 
       const res = await api
-        .post(API_ROUTES.DOCUMENT.SIGN, {
-          json: validated,
-        })
-        .json<{
-          success: boolean;
-          message: string;
-          data: unknown;
-        }>();
+        .post(API_ROUTES.DOCUMENT.SIGN, { json: validated })
+        .json();
 
-      return DocumentSchema.parse(res.data);
+      const parsed = DocumentResponseSchema.parse(res);
+
+      return parsed.data;
     },
   });
 

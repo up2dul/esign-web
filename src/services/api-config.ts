@@ -14,7 +14,10 @@ export const API_ROUTES = {
   },
   DOCUMENT: {
     UPLOAD: "/v1/document/upload",
-    PREVIEW: (id: string) => `/v1/document/preview/${id}`,
+    PREVIEW: (id: string, type?: string) =>
+      type
+        ? `/v1/document/preview/${id}?type=${type}`
+        : `/v1/document/preview/${id}`,
     DOWNLOAD: (id: string, type: string) =>
       `/v1/document/download/${id}?type=${type}`,
     SIGN: "/v1/document/sign",
@@ -41,7 +44,8 @@ export const QUERY_KEYS = {
   },
   DOCUMENT: {
     LIST: ["document", "list"] as const,
-    PREVIEW: (id: string) => ["document", "preview", id] as const,
+    PREVIEW: (id: string, type?: string) =>
+      ["document", "preview", id, type].filter(Boolean) as readonly string[],
     VALIDITY: (id: string) => ["document", "validity", id] as const,
   },
   SIGN: {
