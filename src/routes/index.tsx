@@ -8,8 +8,7 @@ export const Route = createFileRoute("/")({
     try {
       const res = await api.get(API_ROUTES.USER.PROFILE).json();
       UserProfileResponseSchema.parse(res);
-      // profile exists and is valid
-      redirect({
+      throw redirect({
         to: "/app",
       });
     } catch {
