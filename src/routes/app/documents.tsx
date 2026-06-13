@@ -434,19 +434,19 @@ const DocumentsPage = () => {
                     <p className="truncate font-semibold text-[#2b1823] text-[0.88rem]">
                       {file?.name}
                     </p>
-                    <Badge className="shrink-0 bg-[#efe4e8] text-[#9f7784] text-[0.62rem] uppercase tracking-[0.1em]">
+                    <Badge className="shrink-0 bg-[#efe4e8] text-[#9f7784] text-[0.62rem] uppercase tracking-widest">
                       PDF
                     </Badge>
                   </div>
                   <iframe
                     src={previewUrl}
                     title="PDF preview"
-                    className="h-[520px] w-full"
+                    className="h-130 w-full"
                   />
                 </div>
               ) : (
                 <Card className="rounded-2xl border border-[#ebdbe0] bg-[#faf5f7] py-0 ring-0">
-                  <CardContent className="grid h-[520px] place-content-center px-5 text-center">
+                  <CardContent className="grid h-130 place-content-center px-5 text-center">
                     <span className="mx-auto grid size-14 place-content-center rounded-full bg-[#f0e4e8] text-[#c9a8b5]">
                       <FileUpIcon className="size-6" />
                     </span>
@@ -559,7 +559,7 @@ const DocumentsPage = () => {
             </div>
 
             {/* Right: PDF Document Canvas */}
-            <div className="flex h-[800px] flex-col items-center overflow-y-auto rounded-2xl border border-[#ebdbe0] bg-[#eef0f2] p-6 shadow-inner">
+            <div className="flex h-200 flex-col items-center overflow-y-auto rounded-2xl border border-[#ebdbe0] bg-[#eef0f2] p-6 shadow-inner">
               {documentPreview.isLoading && (
                 <p className="text-[#a39098]">Loading document...</p>
               )}
@@ -572,7 +572,8 @@ const DocumentsPage = () => {
                 >
                   {Array.from({ length: numPages }, (_, index) => (
                     <div
-                      key={`page_${index + 1}`}
+                      // biome-ignore lint/suspicious/noArrayIndexKey: static PDF pages, never reordered
+                      key={index}
                       className="relative bg-white shadow-lg"
                       style={{
                         width: "100%",
@@ -795,6 +796,9 @@ const DocumentsPage = () => {
 };
 
 export const Route = createFileRoute("/app/documents")({
+  head: () => ({
+    meta: [{ title: "Documents - Esign" }],
+  }),
   validateSearch: z.object({
     docId: z.string().optional(),
   }),

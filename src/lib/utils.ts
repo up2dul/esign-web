@@ -27,3 +27,12 @@ function getErrorMessage(error: unknown) {
 export function formatFormErrors(errors: readonly unknown[]) {
   return errors.map(getErrorMessage).join(", ");
 }
+
+export function getUserInitials(name: string): string {
+  return name
+    .split(" ")
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
+}

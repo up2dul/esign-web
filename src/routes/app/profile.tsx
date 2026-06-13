@@ -26,17 +26,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getUserInitials } from "@/lib/utils";
 import { useSignSpecimenList, useSignUpload } from "@/services/queries/sign";
 import { useUserProfile } from "@/services/queries/user";
-
-function getInitials(name: string): string {
-  return name
-    .split(" ")
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase();
-}
 
 const SignatureCanvas = ({
   onSave,
@@ -210,9 +202,8 @@ const ProfilePage = () => {
       formData.append("files", blob, "signature.png");
       await signUpload.mutateAsync(formData);
       setOpen(false);
-      signSpecimenList.refetch();
     },
-    [signUpload, signSpecimenList]
+    [signUpload]
   );
 
   return (
@@ -239,7 +230,7 @@ const ProfilePage = () => {
                     <AvatarImage src={user.profile_picture} alt={user.name} />
                   ) : null}
                   <AvatarFallback>
-                    {user ? getInitials(user.name) : "—"}
+                    {user ? getUserInitials(user.name) : "—"}
                   </AvatarFallback>
                   <AvatarBadge className="size-5 bg-primary" />
                 </Avatar>
