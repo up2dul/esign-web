@@ -1,31 +1,36 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   ArchiveIcon,
   CircleHelpIcon,
   FileClockIcon,
   FileTextIcon,
   LayoutGridIcon,
+  LogOutIcon,
   SettingsIcon,
 } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { EsignBrand } from "@/components/layout/esign-brand";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
+import { cn, getUserInitials } from "@/lib/utils";
 import { useUserProfile } from "@/services/queries/user";
-import { Badge } from "../ui/badge";
+import { useAuthStore } from "@/stores/auth-store";
 import { Footer } from "./footer";
-
-function getInitials(name: string): string {
-  return name
-    .split(" ")
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase();
-}
 
 type VaultShellProps = {
   children: ReactNode;
@@ -104,10 +109,17 @@ export const VaultShell = ({ children }: VaultShellProps) => {
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   });
+  const navigate = useNavigate();
   const topSection = getTopSection(pathname);
   const sidebarSection = getSidebarSection(pathname);
+  const clearAuth = useAuthStore((state) => state.clearAuth);
   const userProfile = useUserProfile();
   const user = userProfile.data?.data;
+
+  function handleSignOut() {
+    clearAuth();
+    navigate({ to: "/" });
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-[#2d1b25]">
@@ -134,15 +146,36 @@ export const VaultShell = ({ children }: VaultShellProps) => {
           </div>
 
           <div className="flex items-center gap-3">
-            <Link
-              to="/"
-              className="hidden font-semibold text-[#7f6a73] text-[0.84rem] transition-colors hover:text-primary sm:inline-flex"
-            >
-              Sign Out
-            </Link>
-            <Button className="h-10 rounded-lg bg-primary px-6 text-primary-foreground shadow-[0_10px_25px_-14px_rgba(190,12,94,0.75)] hover:bg-primary/90">
-              Upload
-            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger
+                render={
+                  <Button variant="outline" size="sm">
+                    Sign Out
+                  </Button>
+                }
+              />
+              <AlertDialogContent size="sm">
+                <AlertDialogHeader>
+                  <AlertDialogMedia className="bg-destructive/10 text-destructive">
+                    <LogOutIcon />
+                  </AlertDialogMedia>
+                  <AlertDialogTitle>Sign out?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will end your current session and you will need to log
+                    in again.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel variant="ghost">Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    variant="destructive"
+                    onClick={handleSignOut}
+                  >
+                    Sign Out
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
       </header>
@@ -159,7 +192,7 @@ export const VaultShell = ({ children }: VaultShellProps) => {
                     <AvatarImage src={user.profile_picture} alt={user.name} />
                   ) : null}
                   <AvatarFallback>
-                    {user ? getInitials(user.name) : "—"}
+                    {user ? getUserInitials(user.name) : "—"}
                   </AvatarFallback>
                 </Avatar>
               )}
@@ -184,12 +217,12 @@ export const VaultShell = ({ children }: VaultShellProps) => {
                 )}
               </div>
             </div>
-            <Button
-              variant="outline"
-              className="mt-4 h-9 w-full rounded-lg border-[#edcfd9] bg-white font-semibold text-[0.84rem] text-primary hover:bg-[#fff4f8]"
+            <Link
+              to="/app/documents"
+              className="mt-4 flex h-9 w-full items-center justify-center rounded-lg border border-[#edcfd9] bg-white font-semibold text-[0.84rem] text-primary hover:bg-[#fff4f8]"
             >
               + New Document
-            </Button>
+            </Link>
           </div>
 
           <div className="mt-6 flex flex-col gap-2">
