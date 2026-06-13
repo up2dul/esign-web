@@ -200,5 +200,8 @@ const SignPage = () => {
 };
 
 export const Route = createFileRoute("/app/sign")({
+  head: () => ({
+    meta: [{ title: "Sign Document - Esign" }],
+  }),
   component: SignPage,
 });

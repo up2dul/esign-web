@@ -9,6 +9,28 @@ import { api } from "@/services/api";
 import { API_ROUTES } from "@/services/api-config";
 import { useDocumentPreview } from "@/services/queries/document";
 
+function renderPdfPages(numPages: number) {
+  return Array.from({ length: numPages }, (_, index) => (
+    <div
+      // biome-ignore lint/suspicious/noArrayIndexKey: static PDF pages, never reordered
+      key={`page_${index}`}
+      className="relative bg-white shadow-lg"
+      style={{
+        width: "100%",
+        maxWidth: "600px",
+        margin: "0 auto",
+      }}
+    >
+      <PdfPage
+        pageNumber={index + 1}
+        width={600}
+        renderTextLayer={false}
+        renderAnnotationLayer={false}
+      />
+    </div>
+  ));
+}
+
 const DownloadPage = () => {
   const { docId } = Route.useParams();
   const navigate = useNavigate();
@@ -17,9 +39,9 @@ const DownloadPage = () => {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [numPages, setNumPages] = useState<number>(0);
   const [isDownloading, setIsDownloading] = useState(false);
+  const pageElements = renderPdfPages(numPages);
 
   useEffect(() => {
-    // biome-ignore lint/suspicious/noExplicitAny: API shape
     const bufData = (documentPreview.data?.buffer as any)?.data;
     if (bufData) {
       const bytes = new Uint8Array(bufData);
@@ -75,7 +97,7 @@ const DownloadPage = () => {
 
       <div className="grid gap-6 xl:grid-cols-[1fr_350px]">
         {/* PDF Preview */}
-        <div className="flex h-[800px] flex-col items-center overflow-y-auto rounded-2xl border border-[#ebdbe0] bg-[#eef0f2] p-6 shadow-inner">
+        <div className="flex h-200 flex-col items-center overflow-y-auto rounded-2xl border border-[#ebdbe0] bg-[#eef0f2] p-6 shadow-inner">
           {documentPreview.isLoading && (
             <p className="text-[#a39098]">Loading document...</p>
           )}
@@ -86,24 +108,7 @@ const DownloadPage = () => {
               onLoadError={console.error}
               className="space-y-8"
             >
-              {Array.from({ length: numPages }, (_, index) => (
-                <div
-                  key={`page_${index + 1}`}
-                  className="relative bg-white shadow-lg"
-                  style={{
-                    width: "100%",
-                    maxWidth: "600px",
-                    margin: "0 auto",
-                  }}
-                >
-                  <PdfPage
-                    pageNumber={index + 1}
-                    width={600}
-                    renderTextLayer={false}
-                    renderAnnotationLayer={false}
-                  />
-                </div>
-              ))}
+              {pageElements}
             </PdfDocument>
           )}
         </div>
@@ -163,5 +168,8 @@ const DownloadPage = () => {
 };
 
 export const Route = createFileRoute("/app/documents_/$docId/download")({
+  head: () => ({
+    meta: [{ title: "Download Document - Esign" }],
+  }),
   component: DownloadPage,
 });

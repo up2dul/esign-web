@@ -154,5 +154,8 @@ const ForgotPasswordPage = () => {
 };
 
 export const Route = createFileRoute("/auth/forgot-password")({
+  head: () => ({
+    meta: [{ title: "Forgot Password - Esign" }],
+  }),
   component: ForgotPasswordPage,
 });

@@ -14,6 +14,9 @@ const AppLayout = () => {
 };
 
 export const Route = createFileRoute("/app")({
+  head: () => ({
+    meta: [{ title: "Vault - Esign" }],
+  }),
   beforeLoad: async ({ location }) => {
     try {
       const res = await api.get(API_ROUTES.USER.PROFILE).json();

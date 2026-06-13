@@ -1,4 +1,5 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
 import type {
   Document,
   DocumentListResponse,
@@ -60,6 +61,12 @@ export const useDocumentUpload = () => {
       const parsed = DocumentResponseSchema.parse(res);
       return parsed.data;
     },
+    onSuccess: () => {
+      toast.success("Document uploaded successfully");
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to upload document");
+    },
   });
   return documentUpload;
 };
@@ -73,6 +80,12 @@ export const useDocumentSign = () => {
         .json();
       const parsed = DocumentResponseSchema.parse(res);
       return parsed.data;
+    },
+    onSuccess: () => {
+      toast.success("Document signed successfully");
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to sign document");
     },
   });
   return documentSign;
